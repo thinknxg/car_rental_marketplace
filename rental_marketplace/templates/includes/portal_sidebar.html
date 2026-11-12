@@ -1,0 +1,17 @@
+<aside class="mk-sidebar">
+  <div class="mk-sidebar-logo">
+    <span class="mk-sidebar-logo-badge">Kreatao <span>Rentals</span></span>
+  </div>
+  <a href="/portal" class="mk-sidebar-link" data-path="/portal">Home</a>
+  <a href="/request" class="mk-sidebar-link" data-path="/request">New Request</a>
+  <a href="/account/bookings" class="mk-sidebar-link" data-path="/account/bookings">My Bookings</a>
+  <a href="/fleet" class="mk-sidebar-link" data-path="/fleet">Browse Fleet</a>
+</aside>
+<script>
+(function(){
+  var p = window.location.pathname;
+  document.querySelectorAll('.mk-sidebar-link').forEach(function(a){
+    if(p.indexOf(a.dataset.path) === 0) a.classList.add('active');
+  });
+})();
+</script>

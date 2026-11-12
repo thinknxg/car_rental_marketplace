@@ -1,0 +1,20 @@
+{"doctype":"DocType","name":"Payment Intent","module":"Rental Marketplace","naming_rule":"Expression","autoname":"format:PAY-{YYYY}-{######}","engine":"InnoDB",
+"fields":[
+ {"fieldname":"booking","fieldtype":"Link","label":"Booking","options":"Booking","reqd":1,"in_list_view":1},
+ {"fieldname":"customer","fieldtype":"Link","label":"Customer (User)","options":"User","reqd":1,"in_list_view":1},
+ {"fieldname":"col_a","fieldtype":"Column Break"},
+ {"fieldname":"status","fieldtype":"Select","label":"Status","options":"Created\nProcessing\nSucceeded\nFailed\nCancelled\nExpired","default":"Created","in_list_view":1,"in_filter":1},
+ {"fieldname":"sec_amount","fieldtype":"Section Break","label":"Amount"},
+ {"fieldname":"amount","fieldtype":"Currency","precision":2,"label":"Amount","reqd":1,"in_list_view":1},
+ {"fieldname":"currency","fieldtype":"Data","label":"Currency"},
+ {"fieldname":"col_b","fieldtype":"Column Break"},
+ {"fieldname":"provider","fieldtype":"Data","label":"Provider","default":"stub"},
+ {"fieldname":"provider_intent_id","fieldtype":"Data","label":"Provider Intent ID","unique":1},
+ {"fieldname":"sec_meta","fieldtype":"Section Break","label":"Meta"},
+ {"fieldname":"created_at","fieldtype":"Datetime","label":"Created","read_only":1},
+ {"fieldname":"expires_at","fieldtype":"Datetime","label":"Expires"}],
+"permissions":[
+ {"role":"Marketplace Admin","read":1,"write":1,"create":1,"report":1},
+ {"role":"Marketplace Finance","read":1,"write":1,"report":1},
+ {"role":"Marketplace Operations","read":1},
+ {"role":"Marketplace Customer","read":1,"if_owner":1}]}

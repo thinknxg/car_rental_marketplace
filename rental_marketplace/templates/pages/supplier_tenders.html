@@ -1,0 +1,90 @@
+{% extends "templates/web.html" %}
+{% block title %}Tender Inbox{% endblock %}
+{% block page_content %}
+<link rel="stylesheet" href="/assets/rental_marketplace/css/marketplace.css">
+{% include "rental_marketplace/templates/includes/supplier_sidebar.html" %}
+<div class="mk-portal-main">
+<div class="mk-wrap">
+  <h1 class="mk-h1">Tender inbox</h1>
+  <p class="mk-sub">{{ supplier_name }} — respond before each deadline. Prices are computed server-side from your pricing rules.</p>
+  <div id="alert" class="mk-alert"></div>
+  {% if not tenders %}<div class="mk-card">No open tenders right now.</div>{% endif %}
+  {% for t in tenders %}
+  <div class="mk-card">
+    <div class="mk-offer">
+      <div style="{{ 'cursor:pointer' if t.booking else '' }}" {{ 'onclick="location.href=\'/supplier/bookings/'+t.booking+'\'"' if t.booking else '' }}>
+        <div style="font-weight:700">{{ t.name }} <span class="mk-badge {{ 'ok' if t.invitation_status=='Responded' else '' }}">{{ t.invitation_status }}</span> <span class="mk-badge {{ 'ok' if t.status=='Awarded' else ('warn' if t.status=='Closed' else '') }}">{{ t.status }}</span></div>
+        <div class="mk-meta" style="margin-top:4px">{{ t.vehicle_class }} · {{ t.pickup_location }} → {{ t.dropoff_location }} · {{ frappe.utils.format_datetime(t.pickup_datetime, "d MMM HH:mm") }} → {{ frappe.utils.format_datetime(t.dropoff_datetime, "d MMM HH:mm") }}</div>
+        <div class="mk-meta">Deadline: {{ frappe.utils.format_datetime(t.response_deadline, "d MMM yyyy HH:mm") }}</div>
+        {% if t.booking %}<div class="mk-meta" style="margin-top:2px;color:var(--mk-accent-dark)">View booking {{ t.booking }} →</div>{% endif %}
+      </div>
+      {% if t.status == "Open" and t.invitation_status != "Responded" %}
+      <div style="min-width:300px">
+        <div class="mk-field"><label>Vehicle</label>
+          <select id="veh-{{ t.name }}" onchange="updatePreview('{{ t.name }}')">
+            <option value="">Choose a vehicle</option>
+            {% for v in vehicles %}{% if v.vehicle_class == t.vehicle_class %}<option value="{{ v.name }}">{{ v.display_name }}</option>{% endif %}{% endfor %}
+          </select></div>
+        <div class="mk-grid" style="grid-template-columns:1fr 1fr;margin-top:8px">
+          <div class="mk-field"><label>Discount ({{ t.currency }})</label><input type="number" id="disc-{{ t.name }}" value="0" min="0" step="0.01" oninput="updatePreview('{{ t.name }}')"></div>
+          <div class="mk-field"><label>Deposit ({{ t.currency }})</label><input type="number" id="dep-{{ t.name }}" value="0" min="0" step="0.01"></div>
+        </div>
+        <div class="mk-field" style="margin-top:8px"><label>Cancellation policy</label>
+          <select id="pol-{{ t.name }}"><option value="">Supplier default</option>{% for p in policies %}<option value="{{ p.name }}">{{ p.policy_name }}</option>{% endfor %}</select></div>
+        <div id="preview-{{ t.name }}" class="mk-meta" style="margin-top:8px;line-height:1.6"></div>
+        <button class="mk-btn" style="margin-top:10px" onclick="submitOffer('{{ t.name }}')">Submit offer</button>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+</div>
+<script>
+function showAlert(cls,msg){const a=document.getElementById('alert');a.className='mk-alert '+cls;a.textContent=msg;window.scrollTo(0,0);}
+
+const previewTimers={};
+function updatePreview(t){
+  clearTimeout(previewTimers[t]);
+  previewTimers[t]=setTimeout(()=>{
+    const v=id=>document.getElementById(id+'-'+t).value;
+    const box=document.getElementById('preview-'+t);
+    if(!v('veh')){box.textContent='';return;}
+    frappe.call({method:'rental_marketplace.api.preview_offer_price',
+      args:{tender_id:t,vehicle:v('veh'),discount:v('disc')||0,deposit_amount:v('dep')||0},
+      callback(r){
+        const m=r.message||{};
+        if(m.success){
+          const p=m.data;
+          box.innerHTML='Listed: '+p.currency+' '+p.base_amount.toFixed(2)+
+            (p.discount_amount?' &minus; Discount '+p.currency+' '+p.discount_amount.toFixed(2):'')+
+            ' + Tax '+p.currency+' '+p.tax_amount.toFixed(2)+
+            ' = <b>'+p.currency+' '+p.total_amount.toFixed(2)+'</b>'+
+            ' ('+p.rental_days+' day'+(p.rental_days>1?'s':'')+')';
+        } else {
+          box.textContent='';
+        }
+      }});
+  },300);
+}
+function submitOffer(t){
+  const v=id=>document.getElementById(id+'-'+t).value;
+  if(!v('veh')){showAlert('err','Add a vehicle of the required class first.');return;}
+  frappe.call({method:'rental_marketplace.api.submit_offer',
+    args:{tender_id:t,vehicle:v('veh'),discount:v('disc'),deposit_amount:v('dep'),
+          cancellation_policy:v('pol'),idempotency_key:'offer-'+t+'-'+v('veh')},
+    callback(r){
+      const m=r.message||{};
+      if(m.success){
+        showAlert('ok','Offer '+m.data.offer+' submitted — total '+m.data.total_amount+'. Valid until '+m.data.valid_until+'.');
+        const btn = document.querySelector("button[onclick=\"submitOffer('"+t+"')\"]");
+        const formBlock = btn ? btn.closest('div') : null;
+        if(formBlock){
+          formBlock.innerHTML = '<div class="mk-badge ok" style="padding:8px 14px">Offer submitted — total '+m.data.total_amount+', valid until '+m.data.valid_until+'</div>';
+        }
+      }
+      else showAlert('err',(m.error&&m.error.message)||'Could not submit offer.');
+    }});
+}
+</script>
+{% endblock %}

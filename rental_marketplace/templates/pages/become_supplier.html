@@ -1,0 +1,179 @@
+{% extends "templates/web.html" %}
+{% block title %}List Your Fleet{% endblock %}
+{% block page_content %}
+<link rel="stylesheet" href="/assets/rental_marketplace/css/marketplace.css">
+
+<div class="mk-hero" style="padding:76px 20px 120px">
+  <div class="mk-hero-inner" style="max-width:900px">
+    <h1 class="mk-hero-h1" style="font-size:2.8rem">List your <span>fleet.</span></h1>
+    <p class="mk-hero-sub" style="font-size:1.08rem;max-width:52ch">Join the marketplace and start getting bookings. Tell us about your business — our team reviews every application.</p>
+  </div>
+</div>
+
+<div class="mk-wrap" style="max-width:980px">
+  <div class="mk-card" style="margin:-72px 0 24px;position:relative;z-index:1;padding:48px 56px">
+    <div id="alert" class="mk-alert"></div>
+    <div id="form-view">
+
+      <div class="mk-meta" style="font-weight:700;text-transform:uppercase;letter-spacing:.06em;font-size:.72rem;margin-bottom:14px">Business details</div>
+      <div class="mk-grid" style="grid-template-columns:1fr 1fr;gap:14px">
+        <div class="mk-field"><label>Business name *</label><input type="text" id="f_name" placeholder="e.g. Gulf Motors Rental"></div>
+        <div class="mk-field"><label>Legal / registered name</label><input type="text" id="f_legal" placeholder="If different from business name"></div>
+      </div>
+      <div class="mk-grid" style="grid-template-columns:1fr 1fr;gap:14px">
+        <div class="mk-field"><label>Business type</label>
+          <select id="f_business_type">
+            <option value="">Select...</option>
+            <option>Individual / Sole Proprietor</option>
+            <option>LLC</option>
+            <option>Company</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="mk-field"><label>How many vehicles?</label><input type="number" id="f_fleet_size" min="1" placeholder="e.g. 12"></div>
+      </div>
+      <div class="mk-grid" style="grid-template-columns:1fr 1fr;gap:14px">
+        <div class="mk-field"><label>Commercial Registration (CR) No.</label><input type="text" id="f_cr" placeholder="e.g. 1234567"></div>
+        <div class="mk-field"><label>VAT / Tax Registration No.</label><input type="text" id="f_vat" placeholder="Optional"></div>
+      </div>
+      <div class="mk-field"><label>Business address</label>
+        <textarea id="f_address" rows="2" style="width:100%;padding:12px 14px;border:1.5px solid var(--mk-line);border-radius:10px;font-size:.94rem;font-family:var(--mk-body);background:var(--mk-paper);color:var(--mk-ink);resize:vertical" placeholder="Street, city, postal code"></textarea>
+      </div>
+
+      <div class="mk-meta" style="font-weight:700;text-transform:uppercase;letter-spacing:.06em;font-size:.72rem;margin:24px 0 14px">Contact person</div>
+      <div class="mk-grid" style="grid-template-columns:1fr 1fr;gap:14px">
+        <div class="mk-field"><label>Contact person name</label><input type="text" id="f_contact_person" placeholder="Full name"></div>
+        <div class="mk-field"><label>Contact phone</label><input type="tel" id="f_phone" placeholder="+968 ..."></div>
+      </div>
+      <div class="mk-grid" style="grid-template-columns:1fr 1fr;gap:14px">
+        <div class="mk-field"><label>Contact email *</label><input type="email" id="f_email" placeholder="you@company.com"></div>
+        <div class="mk-field"><label>Country</label><input type="text" id="f_country" placeholder="Oman"></div>
+      </div>
+
+      <div class="mk-meta" style="font-weight:700;text-transform:uppercase;letter-spacing:.06em;font-size:.72rem;margin:24px 0 14px">Branding</div>
+      <div class="mk-grid" style="grid-template-columns:1fr 1fr;gap:14px">
+        <div class="mk-field"><label>Company logo</label><input type="file" id="f_company_logo" accept=".jpg,.jpeg,.png,.svg"></div>
+      </div>
+
+      <div class="mk-meta" style="font-weight:700;text-transform:uppercase;letter-spacing:.06em;font-size:.72rem;margin:24px 0 14px">Verification documents</div>
+      <div class="mk-grid" style="grid-template-columns:1fr 1fr 1fr;gap:14px">
+        <div class="mk-field"><label>Trade license</label><input type="file" id="f_trade_license" accept=".pdf,.jpg,.jpeg,.png"></div>
+        <div class="mk-field"><label>Owner/manager ID</label><input type="file" id="f_id_document" accept=".pdf,.jpg,.jpeg,.png"></div>
+        <div class="mk-field"><label>Insurance certificate</label><input type="file" id="f_insurance" accept=".pdf,.jpg,.jpeg,.png"></div>
+      </div>
+      <div class="mk-meta" style="margin-top:14px;margin-bottom:32px">All documents are kept private and only visible to our verification team.</div>
+
+      <div class="mk-field">
+        <label>Serviceable locations</label>
+        <div class="mk-meta" style="margin-bottom:10px">Where can you pick up / drop off vehicles?</div>
+        {% if locations %}
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px">
+          {% for loc in locations %}
+          <label style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--mk-line);border-radius:10px;cursor:pointer;background:var(--mk-paper);font-size:.88rem">
+            <input type="checkbox" class="loc-check" value="{{ loc.name }}" style="display:none">
+            <span class="mk-tick"></span>
+            <span>{{ loc.location_name }}{% if loc.city %} <span class="mk-meta">· {{ loc.city }}</span>{% endif %}</span>
+          </label>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="mk-meta">No locations configured yet — our team will follow up to confirm coverage.</div>
+        {% endif %}
+      </div>
+
+      <div class="mk-field"><label>Anything else we should know?</label>
+        <textarea id="f_notes" rows="3" style="width:100%;padding:12px 14px;border:1.5px solid var(--mk-line);border-radius:10px;font-size:.94rem;font-family:var(--mk-body);background:var(--mk-paper);color:var(--mk-ink);resize:vertical" placeholder="Vehicle types, availability, anything relevant"></textarea>
+      </div>
+      <button class="mk-btn" style="width:100%;justify-content:center;margin-top:8px" id="submit-btn" onclick="submitApplication()">Submit application</button>
+    </div>
+    <div id="success-view" style="display:none;text-align:center;padding:20px 0">
+      <div style="width:60px;height:60px;border-radius:50%;background:var(--mk-ok-bg);display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
+        <svg viewBox="0 0 24 24" fill="none" width="30" height="30"><path d="M5 13l4 4L19 7" stroke="var(--mk-ok)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <h3 style="margin:0 0 8px">Application received</h3>
+      <p class="mk-sub" style="margin:0">Our team will review your details and documents, then get back to you.</p>
+      <a href="/fleet" class="mk-btn ghost" style="margin-top:20px;display:inline-flex">Back to fleet</a>
+    </div>
+  </div>
+</div>
+
+<script>
+function showAlert(cls, msg){
+  const a = document.getElementById('alert');
+  a.className = 'mk-alert ' + cls;
+  a.textContent = msg;
+}
+async function uploadIfPresent(inputId){
+  const input = document.getElementById(inputId);
+  if(!input.files || !input.files[0]) return null;
+  const fd = new FormData();
+  fd.append('file', input.files[0]);
+  fd.append('is_private', '1');
+  const res = await fetch('/api/method/rental_marketplace.api.upload_supplier_document', {
+    method: 'POST', body: fd,
+    headers: {'X-Frappe-CSRF-Token': frappe.csrf_token || ''}
+  });
+  const data = await res.json();
+  return (data.message && data.message.file_url) || null;
+}
+async function submitApplication(){
+  const name = document.getElementById('f_name').value.trim();
+  const email = document.getElementById('f_email').value.trim();
+  if(!name || !email){
+    showAlert('err', 'Business name and email are required.');
+    return;
+  }
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'Uploading documents…';
+  let tradeLicense, idDocument, insurance, companyLogo;
+  try {
+    companyLogo = await uploadIfPresent('f_company_logo');
+    tradeLicense = await uploadIfPresent('f_trade_license');
+    idDocument = await uploadIfPresent('f_id_document');
+    insurance = await uploadIfPresent('f_insurance');
+  } catch(e) {
+    btn.disabled = false;
+    btn.textContent = 'Submit application';
+    showAlert('err', 'Could not upload documents. Please try again.');
+    return;
+  }
+  btn.textContent = 'Submitting…';
+  const locations = Array.from(document.querySelectorAll('.loc-check:checked')).map(el => el.value);
+  frappe.call({
+    method: 'rental_marketplace.api.submit_supplier_application',
+    args: {
+      business_name: name,
+      legal_name: document.getElementById('f_legal').value.trim(),
+      business_type: document.getElementById('f_business_type').value,
+      business_registration_number: document.getElementById('f_cr').value.trim(),
+      tax_registration_number: document.getElementById('f_vat').value.trim(),
+      business_address: document.getElementById('f_address').value.trim(),
+      contact_person_name: document.getElementById('f_contact_person').value.trim(),
+      contact_email: email,
+      contact_phone: document.getElementById('f_phone').value.trim(),
+      country: document.getElementById('f_country').value.trim(),
+      fleet_size: document.getElementById('f_fleet_size').value,
+      notes: document.getElementById('f_notes').value.trim(),
+      locations: JSON.stringify(locations),
+      trade_license: tradeLicense,
+      id_document: idDocument,
+      insurance_certificate: insurance,
+      company_logo: companyLogo
+    },
+    callback(r){
+      btn.disabled = false;
+      btn.textContent = 'Submit application';
+      const m = r.message || {};
+      if(m.success){
+        document.getElementById('form-view').style.display = 'none';
+        document.getElementById('success-view').style.display = 'block';
+        document.getElementById('alert').className = 'mk-alert';
+      } else {
+        showAlert('err', (m.error && m.error.message) || 'Something went wrong. Please try again.');
+      }
+    }
+  });
+}
+</script>
+{% endblock %}

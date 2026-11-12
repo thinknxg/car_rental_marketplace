@@ -1,0 +1,142 @@
+{% extends "templates/web.html" %}
+{% block title %}Fleet{% endblock %}
+{% block page_content %}
+<link rel="stylesheet" href="/assets/rental_marketplace/css/marketplace.css">
+{% include "rental_marketplace/templates/includes/supplier_sidebar.html" %}
+<div class="mk-portal-main">
+<div class="mk-wrap">
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+    <div>
+      <h1 class="mk-h1">Fleet</h1>
+      <p class="mk-sub">Vehicles, availability blocks and maintenance windows. Availability is always derived from blocks, never a status flag.</p>
+    </div>
+    <button class="mk-btn" onclick="openAddVehicle()">+ Add Vehicle</button>
+  </div>
+
+  <div id="alert" class="mk-alert"></div>
+
+  <div class="mk-grid" style="grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:20px;margin-top:16px">
+    {% for v in vehicles %}
+    <div class="mk-card" style="padding:0;overflow:hidden;cursor:pointer" onclick="location.href='/supplier/fleet/{{ v.name }}'">
+      {% if v.primary_photo %}
+      <img src="{{ v.primary_photo }}" alt="{{ v.display_name }}" style="height:160px;width:100%;object-fit:cover;display:block">
+      {% else %}
+      <div style="height:160px;background:var(--mk-accent-bg);display:flex;align-items:center;justify-content:center;font-family:var(--mk-disp);font-weight:700;color:var(--mk-accent-dark)">{{ v.make or "" }} {{ v.model or "" }}</div>
+      {% endif %}
+      <div style="padding:16px">
+        <div style="font-weight:700;font-family:var(--mk-disp)">{{ v.display_name }}</div>
+        <div class="mk-meta" style="margin-top:2px">{{ v.name }}</div>
+        <div class="mk-meta" style="margin-top:6px">{{ v.vehicle_class }} · {{ v.make }} {{ v.model }} {{ v.model_year or "" }}</div>
+        <div class="mk-meta">{{ v.transmission or "?" }} · {{ v.seats }} seats · {{ v.home_location or "—" }}</div>
+        <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap">
+          <span class="mk-badge {{ 'ok' if v.active else 'warn' }}">{{ "Active" if v.active else "Inactive" }}</span>
+          {% if v.active_blocks %}<span class="mk-badge">{{ v.active_blocks }} active block{{ "s" if v.active_blocks != 1 else "" }}</span>{% endif %}
+          {% if v.daily_rate %}<span class="mk-badge">{{ "%.2f"|format(v.daily_rate) }}/day</span>{% else %}<span class="mk-badge warn">No rate set</span>{% endif %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="mk-card" style="margin-top:20px">
+    <h3 style="margin:0 0 12px;font-size:1.05rem">Upcoming availability blocks</h3>
+    {% if not blocks %}<div class="mk-meta">No active blocks.</div>{% endif %}
+    <table class="mk-table">{% if blocks %}
+      <tr><th>Block</th><th>Vehicle</th><th>Type</th><th>Period</th><th>Booking</th></tr>
+      {% for b in blocks %}
+      <tr>
+        <td>{{ b.name }}</td><td>{{ b.vehicle }}</td>
+        <td><span class="mk-badge">{{ b.block_type }}</span></td>
+        <td class="mk-meta">{{ frappe.utils.format_datetime(b.start_datetime, "d MMM HH:mm") }} → {{ frappe.utils.format_datetime(b.end_datetime, "d MMM HH:mm") }}</td>
+        <td>{{ b.booking or "—" }}</td>
+      </tr>
+      {% endfor %}{% endif %}
+    </table>
+  </div>
+</div>
+</div>
+
+<div id="add-vehicle-modal" style="display:none;position:fixed;inset:0;background:rgba(15,17,21,.55);z-index:999;align-items:center;justify-content:center">
+  <div class="mk-card" style="max-width:640px;width:94%;margin-top:0;max-height:90vh;overflow-y:auto;padding:32px">
+    <div style="font-weight:700;margin-bottom:14px;font-size:1.05rem">Add vehicle</div>
+    <div class="mk-field"><label>Display name</label><input type="text" id="nv_display_name" placeholder="e.g. Toyota Camry 2024"></div>
+    <div class="mk-field"><label>Vehicle class</label>
+      <select id="nv_vehicle_class">{% for c in vehicle_classes %}<option>{{ c.name }}</option>{% endfor %}</select></div>
+    <div class="mk-grid" style="grid-template-columns:1fr 1fr">
+      <div class="mk-field"><label>Make</label><input type="text" id="nv_make"></div>
+      <div class="mk-field"><label>Model</label><input type="text" id="nv_model"></div>
+    </div>
+    <div class="mk-grid" style="grid-template-columns:1fr 1fr">
+      <div class="mk-field"><label>Year</label><input type="number" id="nv_model_year"></div>
+      <div class="mk-field"><label>Seats</label><input type="number" id="nv_seats" value="5"></div>
+    </div>
+    <div class="mk-grid" style="grid-template-columns:1fr 1fr">
+      <div class="mk-field"><label>Transmission</label>
+        <select id="nv_transmission"><option>Automatic</option><option>Manual</option></select></div>
+      <div class="mk-field"><label>Fuel</label>
+        <select id="nv_fuel_type"><option>Petrol</option><option>Diesel</option><option>Hybrid</option><option>Electric</option></select></div>
+    </div>
+    <div class="mk-field"><label>Home location</label>
+      <select id="nv_home_location">{% for l in locations %}<option value="{{ l.name }}">{{ l.location_name }}</option>{% endfor %}</select></div>
+    <div class="mk-meta" style="font-weight:700;text-transform:uppercase;letter-spacing:.06em;font-size:.7rem;margin:18px 0 10px">Pricing</div>
+    <div class="mk-grid" style="grid-template-columns:1fr 1fr 1fr">
+      <div class="mk-field"><label>Daily rate</label><input type="number" step="0.01" id="nv_daily_rate" placeholder="e.g. 25"></div>
+      <div class="mk-field"><label>Weekly rate</label><input type="number" step="0.01" id="nv_weekly_rate" placeholder="Optional"></div>
+      <div class="mk-field"><label>Monthly rate</label><input type="number" step="0.01" id="nv_monthly_rate" placeholder="Optional"></div>
+    </div>
+    <div class="mk-field"><label>Photo</label><input type="file" id="nv_photo" accept="image/*"></div>
+    <div style="display:flex;gap:10px;margin-top:14px">
+      <button class="mk-btn" style="flex:1" id="nv_submit_btn" onclick="submitVehicle()">Add vehicle</button>
+      <button class="mk-btn ghost" style="flex:1" onclick="closeAddVehicle()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function showAlert(cls,msg){const a=document.getElementById('alert');a.className='mk-alert '+cls;a.textContent=msg;window.scrollTo(0,0);}
+function openAddVehicle(){document.getElementById('add-vehicle-modal').style.display='flex';}
+function closeAddVehicle(){document.getElementById('add-vehicle-modal').style.display='none';}
+
+async function submitVehicle(){
+  const btn=document.getElementById('nv_submit_btn'); btn.disabled=true;
+  const v=id=>document.getElementById(id).value;
+  const payload = {
+    display_name:v('nv_display_name'), vehicle_class:v('nv_vehicle_class'),
+    make:v('nv_make'), model:v('nv_model'), model_year:v('nv_model_year'),
+    seats:v('nv_seats'), transmission:v('nv_transmission'),
+    fuel_type:v('nv_fuel_type'), home_location:v('nv_home_location'),
+    daily_rate:v('nv_daily_rate'), weekly_rate:v('nv_weekly_rate'),
+    monthly_rate:v('nv_monthly_rate')
+  };
+  frappe.call({method:'rental_marketplace.api.create_vehicle', args:payload,
+    async callback(r){
+      const m=r.message||{};
+      if(!m.success){btn.disabled=false;showAlert('err',(m.error&&m.error.message)||'Could not add vehicle.');return;}
+      const vehicleName = m.data.vehicle;
+      const fileInput = document.getElementById('nv_photo');
+      if(fileInput.files && fileInput.files[0]){
+        try{
+          const fd=new FormData();
+          fd.append('file', fileInput.files[0]);
+          fd.append('is_private', 0);
+          const res = await fetch('/api/method/upload_file', {
+            method:'POST',
+            headers:{'X-Frappe-CSRF-Token': frappe.csrf_token},
+            body: fd
+          });
+          const data = await res.json();
+          const fileUrl = data.message && data.message.file_url;
+          if(fileUrl){
+            await new Promise(resolve=>{
+              frappe.call({method:'rental_marketplace.api.set_vehicle_photo',
+                args:{vehicle:vehicleName, file_url:fileUrl}, callback:resolve});
+            });
+          }
+        }catch(e){ /* vehicle already created; photo upload is best-effort */ }
+      }
+      closeAddVehicle();
+      location.reload();
+    }});
+}
+</script>
+{% endblock %}

@@ -1,0 +1,23 @@
+<aside class="mk-sidebar">
+  <div class="mk-sidebar-logo">
+    <span class="mk-sidebar-logo-badge">Kreatao <span>Suppliers</span></span>
+  </div>
+  <a href="/supplier" class="mk-sidebar-link" data-path="/supplier">Dashboard</a>
+  <a href="/supplier/tenders" class="mk-sidebar-link" data-path="/supplier/tenders">Tender Inbox</a>
+  <a href="/supplier/fleet" class="mk-sidebar-link" data-path="/supplier/fleet">Fleet</a>
+  <a href="/supplier/bookings" class="mk-sidebar-link" data-path="/supplier/bookings">Bookings</a>
+  <a href="/supplier/finance" class="mk-sidebar-link" data-path="/supplier/finance">Finance</a>
+</aside>
+<script>
+(function(){
+  var p = window.location.pathname;
+  var links = document.querySelectorAll('.mk-sidebar-link');
+  var best = null;
+  links.forEach(function(a){
+    if(p.indexOf(a.dataset.path) === 0){
+      if(!best || a.dataset.path.length > best.dataset.path.length) best = a;
+    }
+  });
+  if(best) best.classList.add('active');
+})();
+</script>

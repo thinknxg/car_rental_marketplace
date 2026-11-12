@@ -1,0 +1,209 @@
+<style>
+.hp-footer{background:#fff;color:#5A5D63;padding:48px 20px 0}
+.hp-footer-top{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:1.1fr 1fr 1fr 1fr 1fr;gap:26px;padding-bottom:36px;align-items:start}
+.hp-footer-col h4{color:var(--mk-ink);font-family:var(--mk-disp);font-size:.92rem;margin:0 0 16px;text-transform:uppercase;letter-spacing:.04em}
+.hp-footer-col a{display:block;color:#5A5D63;text-decoration:none;font-size:.9rem;margin-bottom:14px}
+.hp-footer-col a:hover{color:var(--mk-ink)}
+.hp-footer-col p{font-size:.9rem;margin:0 0 12px;color:#5A5D63}
+.hp-footer-brand-row{height:90px;overflow:hidden;margin-bottom:14px}
+.hp-footer-brand-row img{height:200px;width:auto;border-radius:8px;display:block;margin-top:-55px}
+.hp-footer-social{display:flex;gap:10px;margin-top:16px}
+.hp-footer-social a{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:var(--mk-paper);border:1px solid var(--mk-line);margin:0;color:var(--mk-ink)}
+.hp-footer-social svg{width:16px;height:16px}
+.hp-footer-map{border-radius:12px;overflow:hidden;border:1px solid var(--mk-line);height:150px;margin-top:6px}
+.hp-footer-map iframe{width:100%;height:100%;border:0;display:block}
+.hp-footer-bottom{max-width:1200px;margin:0 auto;padding:20px 0 24px;border-top:1px solid var(--mk-line);font-size:.8rem;text-align:center;color:#9A9DA3}
+@media (max-width:900px){.hp-footer-top{grid-template-columns:1fr 1fr}}
+@media (max-width:560px){.hp-footer-top{grid-template-columns:1fr}}
+</style>
+{% extends "templates/web.html" %}
+{% block title %}Offers{% endblock %}
+{% block page_content %}
+<link rel="stylesheet" href="/assets/rental_marketplace/css/marketplace.css">
+
+<div class="mk-hero" style="padding:140px 20px 180px;background-image:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.15) 60%, rgba(255,255,255,.35)), url('/files/offer.png');background-size:cover;background-position:center;">
+  <div class="mk-hero-inner">
+    <h1 class="mk-hero-h1" style="color:#000;font-weight:800;font-size:3.2rem;text-shadow:0 2px 12px rgba(255,255,255,.6)">Your <span style="color:var(--mk-accent)">offers</span></h1>
+    <p class="mk-hero-sub" style="color:#000;font-weight:600;font-size:1.15rem;text-shadow:0 1px 8px rgba(255,255,255,.6)">Tender <strong style="color:#000">{{ tender_id }}</strong> — ranked by our explainable recommendation score.</p>
+  </div>
+</div>
+
+<div class="mk-wrap" style="max-width:920px">
+  {% if tender %}
+  <div class="mk-card" style="margin-top:-56px;padding:20px 24px;display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap">
+    <div style="display:flex;gap:40px;flex-wrap:wrap">
+      <div>
+        <div class="mk-meta">Pick-up</div>
+        <div style="font-weight:700">{{ frappe.utils.format_datetime(tender.pickup_datetime, "d.MM.yyyy HH:mm") }}</div>
+        <div class="mk-meta">{{ pickup_location_name }}</div>
+      </div>
+      <div>
+        <div class="mk-meta">Return</div>
+        <div style="font-weight:700">{{ frappe.utils.format_datetime(tender.dropoff_datetime, "d.MM.yyyy HH:mm") }}</div>
+        <div class="mk-meta">{{ dropoff_location_name }}</div>
+      </div>
+    </div>
+    <a href="https://wa.me/96895350065" target="_blank" style="display:flex;align-items:center;gap:8px;text-decoration:none;color:var(--mk-ok);font-weight:600;font-size:.9rem">
+      <span style="width:34px;height:34px;border-radius:50%;background:var(--mk-ok);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.1rem">✆</span>
+      WhatsApp us
+    </a>
+  </div>
+  {% endif %}
+
+  <div class="mk-card" style="{{ 'margin-top:14px' if tender else 'margin-top:-56px' }};padding:20px 24px">
+    <div id="alert" class="mk-alert"></div>
+    <div id="countdown-wrap"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+      <span class="mk-meta" id="offer-count">Loading offers…</span>
+      <div class="mk-field" style="max-width:220px;margin:0">
+        <select id="sort" onchange="loadOffers()">
+          <option value="recommended">Recommended</option>
+          <option value="lowest_price">Lowest price</option>
+          <option value="best_rated">Best rated supplier</option>
+          <option value="flexible_cancellation">Flexible cancellation</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div id="offers" style="margin-top:16px"></div>
+</div>
+
+<script>
+const TENDER = {{ tender_id | tojson }};
+const MATCHED_SUPPLIERS = {{ matched_supplier_count | tojson }};
+
+function showAlert(cls,msg){const a=document.getElementById('alert');a.className='mk-alert '+cls;a.textContent=msg;}
+
+function renderCountdown(deadlineStr){
+  const wrap = document.getElementById('countdown-wrap');
+  if(!deadlineStr){ wrap.innerHTML=''; return; }
+  const deadline = new Date(deadlineStr.replace(' ','T'));
+  const now = new Date();
+  const totalMs = 24*60*60*1000;
+  const remainMs = Math.max(0, deadline - now);
+  const pct = Math.min(1, remainMs / totalMs);
+  const segs = 20;
+  const litSegs = Math.round(pct * segs);
+  const crit = pct < 0.25;
+  const hrs = Math.floor(remainMs / 3600000);
+  const mins = Math.floor((remainMs % 3600000) / 60000);
+  let track = '';
+  for(let i=0;i<segs;i++){
+    track += `<div class="mk-countdown-seg ${i<litSegs?('lit'+(crit?' crit':'')):''}"></div>`;
+  }
+  wrap.innerHTML = `<div class="mk-countdown">
+    <div class="mk-countdown-label"><span>Time left to respond</span><span>${remainMs>0?(hrs+'h '+mins+'m'):'Expired'}</span></div>
+    <div class="mk-countdown-track">${track}</div>
+  </div>`;
+}
+
+function loadOffers(){
+  frappe.call({method:'rental_marketplace.api.get_tender_offers',
+    args:{tender_id:TENDER,sort:document.getElementById('sort').value},
+    callback(r){
+      const m=r.message||{};
+      if(!m.success){showAlert('err',(m.error&&m.error.message)||'Could not load offers.');return;}
+      renderCountdown(m.data.response_deadline);
+      const list=m.data.offers||[];
+      document.getElementById('offer-count').textContent = list.length
+        ? list.length+' offer'+(list.length>1?'s':'')+' received'
+        : 'Waiting for suppliers';
+      const el=document.getElementById('offers');
+      if(!list.length){
+        const matchedLine = MATCHED_SUPPLIERS
+          ? MATCHED_SUPPLIERS+' other supplier'+(MATCHED_SUPPLIERS>1?'s':'')+' match your query. Expect offers within 30-90 minutes.'
+          : 'Suppliers are reviewing your request. Expect offers within 30-90 minutes.';
+        el.innerHTML='<div class="mk-card" style="text-align:center;padding:48px 24px">'
+          +'<div style="font-weight:700;font-size:1.3rem;margin-bottom:16px;font-family:var(--mk-disp)">Thank you for your request!</div>'
+          +'<div class="mk-meta" style="margin-bottom:6px">'+matchedLine+'</div>'
+          +'<div class="mk-meta" style="margin-bottom:20px">Check your email for new offers.</div>'
+          +'<div class="mk-meta" style="margin-bottom:20px">No time to wait? <a href="https://wa.me/96895350065" target="_blank" style="color:var(--mk-accent);font-weight:700;text-decoration:underline">Contact us via chat</a> to get a quick response.</div>'
+          +'<a class="mk-btn" href="/fleet">Book Now</a>'
+          +'</div>';
+        return;
+      }
+      el.innerHTML=list.map(o=>`
+        <div class="mk-card mk-offer" style="margin-bottom:14px">
+          <div style="flex:1;min-width:260px">
+            <div style="font-weight:700;font-size:1.1rem;font-family:var(--mk-disp)">${frappe.utils.escape_html(o.vehicle_name||o.vehicle_class||'Vehicle')}</div>
+            <div class="mk-meta" style="margin:4px 0 10px">${o.vehicle_class||''} · ${o.transmission||''} · ${o.fuel||''} · ${o.seats||'?'} seats · ${o.rental_days} days</div>
+            <div>
+              ${o.supplier_verified?'<span class="mk-badge ok">Verified supplier</span>':''}
+              <span class="mk-badge">${frappe.utils.escape_html(o.supplier_display||'Supplier')}${o.supplier_rating?' · ★'+o.supplier_rating:''}</span>
+              <span class="mk-badge ${o.cancellation_summary==='Fully Flexible'?'ok':(o.cancellation_summary==='Non Refundable'?'warn':'')}">${o.cancellation_summary}</span>
+              ${o.mileage_policy?'<span class="mk-badge">'+frappe.utils.escape_html(o.mileage_policy)+'</span>':''}
+            </div>
+          </div>
+          <div style="text-align:right">
+            <div class="mk-price">${o.currency} ${(o.price||0).toFixed(2)}</div>
+            <div class="mk-meta">Deposit ${o.currency} ${(o.deposit||0).toFixed(2)}</div>
+            <div class="mk-meta">Score ${o.score}</div>
+            <button class="mk-btn" style="margin-top:10px;padding:10px 22px;font-size:.92rem" onclick="accept('${o.offer}')">Accept offer</button>
+          </div>
+        </div>`).join('');
+    }});
+}
+
+function accept(offer){
+  if(!confirm('Accept this offer and create your booking?'))return;
+  frappe.call({method:'rental_marketplace.api.accept_offer',
+    args:{tender_id:TENDER,offer_id:offer,
+          idempotency_key:'accept-'+TENDER+'-'+offer},
+    callback(r){
+      const m=r.message||{};
+      if(m.success){window.location.href='/account/bookings?new='+m.data.booking;}
+      else showAlert('err',(m.error&&m.error.message)||'Could not accept offer.');
+    }});
+}
+frappe.ready(function(){ loadOffers(); });
+</script>
+<div class="hp-footer">
+  <div class="hp-footer-top">
+    <div class="hp-footer-col">
+      <div class="hp-footer-brand-row">
+        <img src="/files/kreatao.jpeg" alt="Kreatao">
+      </div>
+      <p>Transparent, verified car rentals across Oman &amp; UAE — powered by Kreatao's thinkNXG platform.</p>
+      <div class="hp-footer-social">
+        <a href="https://wa.me/96895351035" target="_blank" rel="noopener" aria-label="WhatsApp">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.71.45 3.37 1.3 4.83L2 22l5.42-1.42a9.9 9.9 0 0 0 4.62 1.18h.004c5.46 0 9.9-4.45 9.9-9.91C21.96 6.45 17.5 2 12.04 2z" fill="#25D366"/><path d="M17.47 14.38c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.07-.3-.15-1.26-.46-2.4-1.48-.89-.79-1.48-1.77-1.66-2.07-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.67-1.6-.91-2.2-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48s1.07 2.88 1.22 3.08c.15.2 2.1 3.2 5.1 4.49.71.31 1.27.49 1.7.62.71.23 1.36.2 1.87.12.57-.09 1.76-.72 2.01-1.42.25-.7.25-1.29.17-1.42-.07-.12-.27-.2-.57-.35z" fill="#fff"/></svg>
+        </a>
+        <a href="mailto:sales@kreatao.com" aria-label="Email">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 6l10 7 10-7"/></svg>
+        </a>
+      </div>
+    </div>
+    <div class="hp-footer-col">
+      <h4>Quick Links</h4>
+      <a href="/homepage">About Kreatao</a>
+      <a href="/fleet">Browse fleet</a>
+      <a href="/request">Request a vehicle</a>
+      <a href="/become-supplier">List your fleet</a>
+    </div>
+    <div class="hp-footer-col">
+      <h4>Types of Car</h4>
+      {% for c in vehicle_classes %}
+      <a href="/fleet?class={{ c.name }}">{{ c.class_name }}</a>
+      {% endfor %}
+    </div>
+    <div class="hp-footer-col">
+      <h4>Locations</h4>
+      {% for l in locations %}
+      <a href="/fleet?pickup_location={{ l.name }}">{{ l.location_name }}</a>
+      {% endfor %}
+    </div>
+    <div class="hp-footer-col">
+      <h4>Find Us</h4>
+      <p>Al Seeb, Postal Code 111, Muscat, Oman</p>
+      <a href="tel:+96895351035">+968 9535 1035</a>
+      <a href="mailto:sales@kreatao.com">sales@kreatao.com</a>
+      <div class="hp-footer-map">
+        <iframe loading="lazy" src="https://maps.google.com/maps?q=Al%20Seeb%2C%20Muscat%2C%20Oman&z=13&output=embed"></iframe>
+      </div>
+    </div>
+  </div>
+  <div class="hp-footer-bottom">© 2026 Kreatao Technologies. All rights reserved.</div>
+</div>
+
+{% endblock %}

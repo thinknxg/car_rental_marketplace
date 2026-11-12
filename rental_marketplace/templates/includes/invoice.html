@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  body{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;color:#1a1d23;font-size:13px;padding:40px;background:#fff}
+  .inv-header{display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #C7D2DE;padding-bottom:20px;margin-bottom:28px}
+  .inv-logo{height:200px;max-width:420px;object-fit:contain;margin-bottom:8px;margin-top:-25px}
+  .inv-header-left{max-width:60%}
+  .inv-header-left div{color:#666;font-size:11.5px;line-height:1.6}
+  .inv-meta{text-align:right}
+  .inv-meta .inv-title{font-size:22px;font-weight:800;color:#5B7A99;letter-spacing:.06em;margin-bottom:6px}
+  .inv-meta div{font-size:12px;color:#555;line-height:1.6}
+  .inv-section{margin-bottom:24px;display:flex;justify-content:space-between}
+  .inv-label{color:#9a9a9a;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+  .inv-value{font-weight:700;margin-top:5px;color:#1a1d23}
+  table{width:100%;border-collapse:collapse;margin-top:6px;border-radius:10px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+  thead th{background:#EEF2F7;color:#3B4A5A;text-align:left;padding:12px 14px;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;font-weight:700;border-bottom:2px solid #C7D2DE}
+  tbody td{padding:12px 14px;border-bottom:1px solid #eef0f3;font-size:12.5px;color:#333}
+  tbody tr:nth-child(even){background:#FAFBFC}
+  tbody tr:last-child td{border-bottom:none}
+  .amt{text-align:right;font-variant-numeric:tabular-nums}
+  .total-row td{font-weight:800;font-size:14.5px;background:#F3F6F9;border-top:2px solid #C7D2DE;color:#1a1d23}
+  .note-box{margin-top:26px;padding:16px 18px;background:#FFF8E8;border-left:4px solid #F2C94C;border-radius:6px;font-size:12px;line-height:1.65;color:#5a4a20}
+  .footer{margin-top:36px;padding-top:16px;border-top:1px solid #eee;font-size:11px;color:#999;text-align:center}
+  .rent-calc-box{display:inline-block;margin-top:6px;padding:5px 10px;border:1.5px solid #C7D2DE;border-radius:6px;font-size:11.5px;font-weight:700;color:#3B4A5A;background:#F8FAFC}
+</style>
+</head>
+<body>
+  <div class="inv-header">
+    <div class="inv-header-left">
+      <img class="inv-logo" src="/files/kreatao.jpeg" alt="Logo">
+      {% if settings.company_address %}<div>{{ settings.company_address }}</div>{% endif %}
+      {% if settings.company_vat_trn %}<div>VAT/TRN: {{ settings.company_vat_trn }}</div>{% endif %}
+    </div>
+    <div class="inv-meta">
+      <div class="inv-title">INVOICE</div>
+      <div>INV-{{ booking.name }}</div>
+      <div>{{ frappe.utils.format_date(frappe.utils.today(), "d MMM yyyy") }}</div>
+    </div>
+  </div>
+
+  <div class="inv-section">
+    <div>
+      <div class="inv-label">Bill To</div>
+      <div class="inv-value">{{ booking.customer }}</div>
+    </div>
+    <div style="text-align:right">
+      <div class="inv-label">Booking Reference</div>
+      <div class="inv-value">{{ booking.name }}</div>
+      <div style="color:#666;margin-top:3px">{{ booking.vehicle }} &middot; {{ booking.pickup_location }}</div>
+      <div style="color:#666">{{ frappe.utils.format_datetime(booking.pickup_datetime, "d MMM yyyy HH:mm") }} &rarr; {{ frappe.utils.format_datetime(booking.dropoff_datetime, "d MMM yyyy HH:mm") }}</div>
+    </div>
+  </div>
+
+  {% set duration = ((booking.dropoff_datetime - booking.pickup_datetime).days) or 1 %}
+  {% set trip_desc = "Vehicle Rental - " ~ booking.vehicle ~ ", " ~ duration ~ " day(s), " ~ frappe.utils.format_date(booking.pickup_datetime, "d MMM yyyy") ~ " to " ~ frappe.utils.format_date(booking.dropoff_datetime, "d MMM yyyy") %}
+  {% set extras_pretax = extras_lines|sum(attribute="amount") if extras_lines else 0 %}
+  {% set pretax_total = (booking.gross_amount or 0) - (booking.tax_amount or 0) %}
+  {% set rent_pretax = pretax_total - extras_pretax %}
+  {% set commission_rate = 0.15 %}
+  {% set rent_display = rent_pretax if booking.collect_full_amount else (rent_pretax * commission_rate) %}
+
+  <div class="inv-label" style="margin-bottom:8px">Rent</div>
+  <table>
+    <thead><tr><th>Item Code</th><th>Description</th><th class="amt">Amount ({{ booking.currency }})</th></tr></thead>
+    <tbody>
+    <tr>
+      <td>Rent</td>
+      <td>
+        {{ trip_desc }}
+        {% if not booking.collect_full_amount %}
+        <div class="rent-calc-box">OMR {{ "%.2f"|format(rent_pretax / duration) }} X {{ duration }} DAY(S) = OMR {{ "%.2f"|format(rent_pretax) }}</div>
+        {% endif %}
+      </td>
+      <td class="amt">{{ "%.2f"|format(rent_display) }}</td>
+    </tr>
+    </tbody>
+  </table>
+
+  {% if extras_lines %}
+  <div style="margin-top:20px">
+    <div class="inv-label" style="margin-bottom:8px">Extras</div>
+    <table>
+      <thead><tr><th>Extra</th><th>Rate/Days</th><th class="amt">Amount ({{ booking.currency }})</th></tr></thead>
+      <tbody>
+      {% for e in extras_lines %}
+      {% set e_amount = e.amount or 0 %}
+      {% set e_display = e_amount if booking.collect_full_amount else (e_amount * commission_rate) %}
+      <tr>
+        <td>{{ e.extra_name or e.extra }}</td>
+        <td>{% if e.pricing_method == "Per Day" %}{{ "%.2f"|format(e.price or 0) }}({{ rental_days or 1 }}) = (OMR {{ "%.2f"|format(e_amount) }}){% else %}{{ "%.2f"|format(e.price or 0) }}{% endif %}</td>
+        <td class="amt">{{ "%.2f"|format(e_display) }}</td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  {% if booking.collect_full_amount %}
+  <table style="margin-top:20px">
+    <tbody>
+    <tr><td></td><td>Subtotal</td><td class="amt">{{ "%.2f"|format(pretax_total) }}</td></tr>
+    <tr><td></td><td>VAT{% if tax_percentage_applied %} ({{ "%g"|format(tax_percentage_applied) }}%){% endif %}</td><td class="amt">{{ "%.2f"|format(booking.tax_amount or 0) }}</td></tr>
+    <tr class="total-row"><td></td><td>Total</td><td class="amt">{{ "%.2f"|format(booking.gross_amount or 0) }}</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note-box">
+    <strong>Amount collected: {{ booking.currency }} {{ "%.2f"|format(booking.gross_amount or 0) }}.</strong><br>
+    The full amount has been collected. Nothing further is payable to the vehicle owner/vendor.
+  </div>
+
+  {% else %}
+
+  {% set collected_subtotal = rent_display + (extras_pretax * commission_rate) %}
+  {% set vat_rate = (tax_percentage_applied or 5) / 100 %}
+  {% set collected_vat = collected_subtotal * vat_rate %}
+  <table style="margin-top:20px">
+    <tbody>
+    <tr><td></td><td>Subtotal (15% of Rent &amp; Extra)</td><td class="amt">{{ "%.2f"|format(collected_subtotal) }}</td></tr>
+    <tr><td></td><td>VAT{% if tax_percentage_applied %} ({{ "%g"|format(tax_percentage_applied) }}%){% endif %}</td><td class="amt">{{ "%.3f"|format(collected_vat) }}</td></tr>
+    <tr class="total-row"><td></td><td>Grand Total (payable now)</td><td class="amt">{{ "%.2f"|format(collected_subtotal + collected_vat) }}</td></tr>
+    </tbody>
+  </table>
+
+  {% set grand_total_now = collected_subtotal + collected_vat %}
+  {% set trip_total_with_vat = pretax_total * (1 + vat_rate) %}
+  {% set payable_to_vendor = trip_total_with_vat - grand_total_now %}
+  <div class="note-box">
+    <strong>Total trip amount (Rent &amp; Extras + VAT{% if tax_percentage_applied %} {{ "%g"|format(tax_percentage_applied) }}%{% endif %}): {{ booking.currency }} {{ "%.2f"|format(trip_total_with_vat) }}.</strong><br>
+    This invoice covers only the amount shown above ({{ booking.currency }} {{ "%.2f"|format(grand_total_now) }}). The remaining amount of
+    <strong>{{ booking.currency }} {{ "%.2f"|format(payable_to_vendor) }}</strong>
+    is payable directly to the vehicle owner/vendor at the time of pickup.
+  </div>
+  {% endif %}
+
+  <div class="footer">{{ settings.invoice_footer_note or "" }}</div>
+</body>
+</html>
