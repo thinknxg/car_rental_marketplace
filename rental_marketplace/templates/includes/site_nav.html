@@ -1,0 +1,11 @@
+<nav class="mk-sitenav" aria-label="Main">
+  <a class="mk-sitenav-brand" href="/homepage"><img src="/files/kreatao.jpeg" alt="Kreatao"></a>
+  <div class="mk-sitenav-links">
+    <a href="/homepage">Home</a>
+    <a href="/fleet">Our Fleet</a>
+    <a href="/account/bookings">My Booking</a>
+    <a href="/become-supplier">List Your Fleet</a>
+    <a href="https://wa.me/96895351035" target="_blank" rel="noopener">Help Center</a>
+    {% if frappe.session.user == "Guest" %}<a class="signin" href="/login">Sign in</a>{% else %}<a class="signin" href="/?cmd=web_logout">Sign out</a>{% endif %}
+  </div>
+</nav>

@@ -156,3 +156,16 @@ body{
 .mk-kpi.c-purple::before{background:#8B4FE0}
 .mk-kpi.c-teal{background:#E8F6F6}
 .mk-kpi.c-teal::before{background:#1B9C9C}
+
+/* ---- site header: hide Frappe's default website bar on every marketplace page ---- */
+header, header .navbar, nav.navbar, .navbar, .page-header-wrapper{display:none!important}
+html, body{margin:0!important;padding:0!important}
+.page-content-wrapper, .page-content-wrapper > main, main.container, main.container-fluid, .page_content, #page-content{margin-top:0!important;padding-top:0!important}
+.mk-sitenav{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:14px 32px;background:#fff;border-bottom:1px solid var(--mk-line);font-family:var(--mk-body)}
+.mk-sitenav-brand img{height:48px;width:auto;border-radius:10px;display:block}
+.mk-sitenav-links{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.mk-sitenav-links a{padding:10px 16px;border-radius:999px;color:var(--mk-ink);text-decoration:none;font-family:var(--mk-disp);font-weight:600;font-size:.98rem}
+.mk-sitenav-links a:hover{background:var(--mk-accent-bg);color:var(--mk-accent-dark)}
+.mk-sitenav-links a.signin{background:var(--mk-ink);color:#fff;margin-left:6px}
+.mk-sitenav-links a.signin:hover{background:var(--mk-accent);color:#fff}
+@media (max-width:700px){.mk-sitenav{padding:12px 16px}.mk-sitenav-links a{padding:8px 12px;font-size:.9rem}}

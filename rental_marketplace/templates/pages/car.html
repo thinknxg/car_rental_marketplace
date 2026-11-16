@@ -20,6 +20,7 @@
 {% block title %}{{ vehicle.display_name or (vehicle.make + " " + vehicle.model) }}{% endblock %}
 {% block page_content %}
 <link rel="stylesheet" href="/assets/rental_marketplace/css/marketplace.css">
+{% include "rental_marketplace/templates/includes/site_nav.html" %}
 <style>
   .mk-car-wrap{max-width:1200px;margin:0 auto;padding:28px 20px 60px}
   .mk-car-back{display:inline-flex;align-items:center;gap:6px;color:var(--mk-mut);text-decoration:none;font-size:.88rem;margin-bottom:16px}
