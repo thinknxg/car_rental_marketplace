@@ -3,6 +3,12 @@
 {% block page_content %}
 <link rel="stylesheet" href="/assets/rental_marketplace/css/marketplace.css">
 <style>
+/* hero-fullbleed: hide the default website bar so the hero starts at the very top */
+header, header .navbar, nav.navbar, .navbar, .page-header-wrapper{display:none!important}
+html, body{margin:0!important;padding:0!important}
+.page-content-wrapper, .page-content-wrapper > main, main.container, main.container-fluid, .page_content, #page-content{margin-top:0!important;padding-top:0!important}
+</style>
+<style>
 .hp-section{max-width:1100px;margin:0 auto;padding:64px 20px}
 .hp-h2{font-family:var(--mk-disp);font-weight:700;font-size:1.9rem;text-align:center;margin:0 0 8px}
 .hp-sub{color:var(--mk-mut);text-align:center;max-width:56ch;margin:0 auto 40px}
