@@ -40,6 +40,4 @@ def ensure_custom_fields():
              fieldtype="Check", insert_after="amount_due", default="0"),
         dict(fieldname="sales_invoice", label="Sales Invoice", fieldtype="Link",
              options="Sales Invoice", insert_after="collect_full_amount", read_only=1),
-        dict(fieldname="extras_snapshot", label="Extras Snapshot", fieldtype="Long Text",
-             insert_after="extras_amount"),
     ]}, update=True)

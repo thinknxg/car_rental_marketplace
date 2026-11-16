@@ -276,12 +276,6 @@
    "read_only": 1
   },
   {
-   "fieldname": "extras_snapshot",
-   "fieldtype": "JSON",
-   "label": "Extras Snapshot",
-   "read_only": 1
-  },
-  {
    "fieldname": "policy_snapshot",
    "fieldtype": "JSON",
    "label": "Policy Snapshot",
