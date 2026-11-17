@@ -1,5 +1,16 @@
 {% extends "templates/web.html" %}
-{% block title %}Rent a Car{% endblock %}
+{% block title %}ThinkCarRent | Compare Car Rental Offers in Oman and UAE{% endblock %}
+{% block head %}{{ super() }}
+<meta name="description" content="Tell us what car you need and get competing offers from verified rental suppliers in Muscat and Dubai. Pay a small amount now and the rest at pickup.">
+<link rel="canonical" href="https://thinkcarrent.com/">
+<link rel="icon" type="image/png" href="/files/thinkcarrent_favicon.png">
+<link rel="apple-touch-icon" href="/files/thinkcarrent_favicon.png">
+<meta property="og:site_name" content="ThinkCarRent">
+<meta property="og:description" content="Get competing car rental offers from verified suppliers in Oman and the UAE. Pay a small amount now, the rest at pickup.">
+<meta property="og:url" content="https://thinkcarrent.com/">
+<meta property="og:image" content="https://thinkcarrent.com/files/thinkcarrent_favicon.png">
+<meta name="twitter:card" content="summary">
+{% endblock %}
 {% block page_content %}
 <link rel="stylesheet" href="/assets/rental_marketplace/css/marketplace.css">
 <style>
