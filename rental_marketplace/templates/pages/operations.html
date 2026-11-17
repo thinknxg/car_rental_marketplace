@@ -131,6 +131,7 @@ html{scroll-behavior:smooth}
   <a href="#settlements" class="mk-sidebar-link"><span class="dot"></span>Settlements{% if pending_settlements %}<span class="mk-op-navcount">{{ pending_settlements|length }}</span>{% endif %}</a>
   <a href="#refunds-audit" class="mk-sidebar-link"><span class="dot"></span>Refunds &amp; audit</a>
   <a href="#locations" class="mk-sidebar-link"><span class="dot"></span>Locations</a>
+  <a href="#visitors" class="mk-sidebar-link"><span class="dot"></span>Visitors</a>
   <a href="#insights" class="mk-sidebar-link"><span class="dot"></span>Performance &amp; health{% if health_warnings %}<span class="mk-op-navcount">{{ health_warnings }}</span>{% endif %}</a>
   <a href="#all-bookings" class="mk-sidebar-link"><span class="dot"></span>All bookings</a>
 
@@ -218,11 +219,33 @@ html{scroll-behavior:smooth}
       </div>
     </div>
 
+    <div class="mkx-two mk-op-section" id="visitors" style="grid-template-columns:3fr 2fr">
+      <div class="mk-op-card">
+        <div class="mk-op-card-head"><h3 class="mk-op-card-title"><span>Website visitors<span class="mkx-sub2">Browsers that opened a public page in {{ period_label }}</span></span></h3></div>
+        {% if not visitors.unique %}<div class="mk-op-empty">No visits recorded in this period yet.</div>{% endif %}
+        <div style="display:flex;gap:32px;flex-wrap:wrap;margin-bottom:18px">
+          <div><div class="mk-meta">Unique visitors</div><strong style="font-size:1.7rem">{{ visitors.unique }}</strong></div>
+          <div><div class="mk-meta">Page views</div><strong style="font-size:1.7rem">{{ visitors.views }}</strong></div>
+          <div><div class="mk-meta">Requests per visitor</div><strong style="font-size:1.7rem">{{ visitors.to_request }}%</strong></div>
+        </div>
+        <div class="mkx-fn">{% for p in visitors.pages %}
+          <div class="mkx-fr" style="grid-template-columns:150px 1fr 48px"><span>{{ p.name }}</span><div class="t"><i style="width:{{ p.pct }}%"></i></div><b>{{ p.count }}</b></div>
+        {% endfor %}</div>
+      </div>
+      <div class="mk-op-card">
+        <div class="mk-op-card-head"><h3 class="mk-op-card-title"><span>Top sources<span class="mkx-sub2">Unique visitors by campaign or referring site</span></span></h3></div>
+        {% if not visitors.sources %}<div class="mk-op-empty">No data yet.</div>{% endif %}
+        <div class="mkx-fn">{% for p in visitors.sources %}
+          <div class="mkx-fr" style="grid-template-columns:150px 1fr 40px"><span>{{ p.name }}</span><div class="t"><i style="width:{{ p.pct }}%"></i></div><b>{{ p.count }}</b></div>
+        {% endfor %}</div>
+      </div>
+    </div>
+
     <div class="mkx-two mk-op-section" style="grid-template-columns:3fr 2fr">
       <div class="mk-op-card">
         <div class="mk-op-card-head"><h3 class="mk-op-card-title"><span>Conversion funnel<span class="mkx-sub2">Created in {{ period_label }}, request to completed rental</span></span></h3><span class="mkx-pill g">{{ funnel.end_to_end }}% end to end</span></div>
         {% if not funnel.stages %}<div class="mk-op-empty">Not enough data yet.</div>{% endif %}
-        <div class="mkx-fn">{% for st in funnel.stages %}
+        <div class="mkx-fn">{% if visitors.unique %}<div class="mkx-fr"><span>Visitors</span><div class="t"><i style="width:100%;background:#64748B"></i></div><b>{{ visitors.unique }}</b></div>{% endif %}{% for st in funnel.stages %}
           <div class="mkx-fr"><span>{{ st.label }}</span><div class="t"><i style="width:{{ st.pct }}%{% if loop.last %};background:#0F766E{% endif %}"></i></div><b>{{ st.count }} · {{ st.pct }}%</b></div>
         {% endfor %}</div>
       </div>

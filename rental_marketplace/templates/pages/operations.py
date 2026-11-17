@@ -407,6 +407,31 @@ def _extras(context):
                 "end_to_end": min(100, round(done * 100.0 / base))}
     context.funnel = _safe(funnel, {"stages": [], "end_to_end": 0})
 
+    # --- website visitors (Frappe Web Page View) for the chosen month ----------------
+    def visitors():
+        empty = {"unique": 0, "views": 0, "pages": [], "sources": [], "to_request": 0}
+        if not frappe.db.table_exists("Web Page View"):
+            return empty
+        w = (_between("creation", start, end)
+             + " and path not in ('operations','login') and left(path,8)!='supplier' and left(path,7)!='partner'")
+        row = frappe.db.sql(f"select count(distinct visitor_id), count(*) from `tabWeb Page View` where 1=1{w}")[0]
+        uniq, views = int(row[0] or 0), int(row[1] or 0)
+        pages = frappe.db.sql(
+            f"select path as name, count(*) as c from `tabWeb Page View` where 1=1{w} "
+            "group by path order by c desc limit 6", as_dict=True)
+        sources = frappe.db.sql(
+            "select case when ifnull(source,'')!='' then source "
+            "when ifnull(referrer,'')!='' then substring_index(substring_index(referrer,'://',-1),'/',1) "
+            f"else 'Direct' end as name, count(distinct visitor_id) as c from `tabWeb Page View` where 1=1{w} "
+            "group by name order by c desc limit 6", as_dict=True)
+        def bars(rows):
+            top = max([r["c"] for r in rows] or [1]) or 1
+            return [{"name": r["name"] or "/", "count": int(r["c"]), "pct": round(r["c"] * 100.0 / top)} for r in rows]
+        reqs = ((context.funnel.get("stages") or [{}])[0]).get("count", 0)
+        return {"unique": uniq, "views": views, "pages": bars(pages), "sources": bars(sources),
+                "to_request": min(100, round(reqs * 100.0 / uniq, 1)) if uniq else 0}
+    context.visitors = _safe(visitors, {"unique": 0, "views": 0, "pages": [], "sources": [], "to_request": 0})
+
     # --- top pickup locations for the chosen month -------------------------------
     def locations():
         rows = frappe.db.sql(
