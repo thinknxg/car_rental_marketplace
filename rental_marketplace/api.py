@@ -1168,3 +1168,52 @@ def remove_booking_extra(booking_id, extra, idempotency_key=None):
 
     return idempotency.run(idempotency_key, "remove_booking_extra",
                            {"booking": booking_id, "extra": extra}, _do)
+
+
+_LOCATION_TYPES = ("Airport", "City", "Port", "Hotel Zone", "Other")
+
+
+def _require_operator_role():
+    if not (set(frappe.get_roles()) & {"Marketplace Admin", "Marketplace Operations", "System Manager"}):
+        frappe.throw("Operators only.", frappe.PermissionError)
+
+
+@frappe.whitelist(allow_guest=False)
+@api_handler
+def add_location(location_name, location_type="City", city="", country=""):
+    """Create a pick-up / drop-off location from the Operations console."""
+    import re as _re
+    _require_operator_role()
+    location_name = (location_name or "").strip()
+    if not location_name or len(location_name) > 80:
+        frappe.throw("Enter a location name (up to 80 characters).", frappe.ValidationError)
+    if location_type not in _LOCATION_TYPES:
+        frappe.throw("Choose a valid location type.", frappe.ValidationError)
+    if frappe.db.exists("Marketplace Location", {"location_name": location_name,
+                                                 "location_type": location_type}):
+        frappe.throw("This location already exists.", frappe.ValidationError)
+    slug = lambda t: _re.sub(r"[^A-Z0-9]+", "-", (t or "").upper()).strip("-")
+    base = slug(location_name)[:24] or "LOC"
+    if frappe.db.exists("Marketplace Location", base):
+        base = base[:20].strip("-") + "-" + slug(location_type)[:5]
+    code, n = base, 1
+    while frappe.db.exists("Marketplace Location", code):
+        n += 1
+        code = f"{base[:26]}-{n}"
+    doc = frappe.get_doc({"doctype": "Marketplace Location", "location_code": code,
+                          "location_name": location_name, "location_type": location_type,
+                          "city": (city or "").strip()[:60], "country": (country or "").strip()[:60],
+                          "active": 1})
+    doc.insert(ignore_permissions=True)
+    return {"location": doc.name}
+
+
+@frappe.whitelist(allow_guest=False)
+@api_handler
+def set_location_active(location, active):
+    """Show or hide a location in the website drop-downs."""
+    _require_operator_role()
+    if not frappe.db.exists("Marketplace Location", location):
+        frappe.throw("Location not found.", frappe.ValidationError)
+    frappe.db.set_value("Marketplace Location", location, "active", 1 if int(active) else 0)
+    return {"location": location, "active": 1 if int(active) else 0}

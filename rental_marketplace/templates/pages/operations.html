@@ -130,6 +130,7 @@ html{scroll-behavior:smooth}
   <a href="#approvals" class="mk-sidebar-link"><span class="dot"></span>Booking approvals{% if pending_bookings %}<span class="mk-op-navcount">{{ pending_bookings|length }}</span>{% endif %}</a>
   <a href="#settlements" class="mk-sidebar-link"><span class="dot"></span>Settlements{% if pending_settlements %}<span class="mk-op-navcount">{{ pending_settlements|length }}</span>{% endif %}</a>
   <a href="#refunds-audit" class="mk-sidebar-link"><span class="dot"></span>Refunds &amp; audit</a>
+  <a href="#locations" class="mk-sidebar-link"><span class="dot"></span>Locations</a>
   <a href="#insights" class="mk-sidebar-link"><span class="dot"></span>Performance &amp; health{% if health_warnings %}<span class="mk-op-navcount">{{ health_warnings }}</span>{% endif %}</a>
   <a href="#all-bookings" class="mk-sidebar-link"><span class="dot"></span>All bookings</a>
 
@@ -519,6 +520,26 @@ html{scroll-behavior:smooth}
       </div>
     </div>
 
+    <div class="mk-op-card mk-op-section" id="locations">
+      <div class="mk-op-card-head"><h3 class="mk-op-card-title"><span>Locations<span class="mkx-sub2">Pick-up and drop-off places shown in the website drop-downs</span></span></h3><span class="mkx-pill n">{{ locations_admin|length }} total</span></div>
+      <form class="mkx-locform" onsubmit="return addLocation(event)">
+        <div><label for="loc-name">Location name</label><input id="loc-name" required maxlength="80" placeholder="e.g. Muscat International Airport"></div>
+        <div><label for="loc-type">Type</label><select id="loc-type">{% for t in location_types %}<option>{{ t }}</option>{% endfor %}</select></div>
+        <div><label for="loc-city">City</label><input id="loc-city" maxlength="60" placeholder="Muscat"></div>
+        <div><label for="loc-country">Country</label><input id="loc-country" maxlength="60" placeholder="Oman"></div>
+        <button class="mkx-btn p" type="submit">Add location</button>
+      </form>
+      {% if not locations_admin %}<div class="mk-op-empty">No locations yet. Add your first one above so customers can pick it on the website.</div>{% endif %}
+      <table class="mk-op-table">{% if locations_admin %}<tr><th>Location</th><th>Type</th><th>City</th><th>Country</th><th>Shown on website</th><th></th></tr>
+        {% for l in locations_admin %}<tr>
+          <td><strong>{{ l.location_name }}</strong><div class="mk-meta">{{ l.name }}</div></td>
+          <td>{{ l.location_type or "—" }}</td><td>{{ l.city or "—" }}</td><td>{{ l.country or "—" }}</td>
+          <td>{% if l.active %}<span class="mkx-pill g">Yes</span>{% else %}<span class="mkx-pill n">Hidden</span>{% endif %}</td>
+          <td class="actions"><button class="mk-btn ghost" style="padding:8px 14px;font-size:.82rem" onclick="setLoc('{{ l.name }}', {{ 0 if l.active else 1 }})">{{ "Hide" if l.active else "Show" }}</button></td>
+        </tr>{% endfor %}{% endif %}
+      </table>
+    </div>
+
     <div class="mkx-two mk-op-section" id="insights" style="grid-template-columns:3fr 2fr">
       <div class="mk-op-card">
         <div class="mk-op-card-head"><h3 class="mk-op-card-title"><span>Supplier performance<span class="mkx-sub2">{{ period_label }}</span></span></h3><a class="mkx-btn" href="/app/marketplace-supplier">View all</a></div>
@@ -656,6 +677,18 @@ new Chart(document.getElementById('statusChart'), {
     if(t){ var el = document.getElementById('all-bookings'); if(el) el.scrollIntoView({behavior:'smooth', block:'start'}); }
   });
 })();
+
+function addLocation(e){
+  e.preventDefault();
+  act('add_location', {
+    location_name: document.getElementById('loc-name').value.trim(),
+    location_type: document.getElementById('loc-type').value,
+    city: document.getElementById('loc-city').value.trim(),
+    country: document.getElementById('loc-country').value.trim()
+  });
+  return false;
+}
+function setLoc(name, active){ act('set_location_active', {location: name, active: active}); }
 
 function openSupplierModal(templateId){
   const tpl = document.getElementById(templateId);

@@ -486,6 +486,11 @@ def _extras(context):
         return items
     context.health = _safe(health, [])
     context.health_warnings = sum(1 for h in context.health if h["state"] != "ok")
+    context.locations_admin = frappe.get_all(
+        "Marketplace Location",
+        fields=["name", "location_name", "location_type", "city", "country", "active"],
+        order_by="location_name", limit_page_length=500)
+    context.location_types = ["Airport", "City", "Port", "Hotel Zone", "Other"]
 
     # --- header ---------------------------------------------------------------------
     user = frappe.session.user
