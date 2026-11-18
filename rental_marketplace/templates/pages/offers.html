@@ -19,11 +19,21 @@
 {% extends "templates/web.html" %}
 {% block title %}Offers{% endblock %}
 {% block page_content %}
-<link rel="stylesheet" href="/assets/rental_marketplace/css/marketplace.css?v=202611183">
-{% include "rental_marketplace/templates/includes/site_nav.html" %}
+<link rel="stylesheet" href="/assets/rental_marketplace/css/marketplace.css?v=202611184">
 
-<div class="mk-hero" style="padding:140px 20px 180px;background-image:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.15) 60%, rgba(255,255,255,.35)), url('/files/offer.png');background-size:cover;background-position:center;">
-  <div class="mk-hero-inner">
+<div class="mk-hero" style="padding:0 20px 180px;background-image:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.15) 60%, rgba(255,255,255,.35)), url('/files/offer.png');background-size:cover;background-position:center;">
+  <div class="hp-nav hp-nav-bleed hp-nav-solid">
+    <a class="hp-logo-link" href="/homepage"><img class="hp-logo" src="/files/thinkcarrent-logo-square-1024.png" alt="ThinkCarRent"></a>
+    <input type="checkbox" id="hp-nav-toggle" class="hp-nav-toggle" aria-hidden="true" tabindex="-1">
+    <label for="hp-nav-toggle" class="hp-nav-burger" aria-label="Menu"><span></span><span></span><span></span></label>
+    <div class="hp-nav-right">
+      <a href="https://wa.me/96895351035" target="_blank" rel="noopener" class="hp-nav-link">Help Center</a>
+      <a href="/become-supplier" class="hp-nav-pill">List Your Fleet</a>
+      <a href="/account/bookings" class="hp-nav-pill">My Booking</a>
+      {% if frappe.session.user == "Guest" %}<a href="/login" class="hp-nav-signin">Sign in</a>{% else %}<a href="/?cmd=web_logout" class="hp-nav-signin">Sign out</a>{% endif %}
+    </div>
+  </div>
+  <div class="mk-hero-inner" style="padding-top:56px">
     <h1 class="mk-hero-h1" style="color:#000;font-weight:800;font-size:3.2rem;text-shadow:0 2px 12px rgba(255,255,255,.6)">Your <span style="color:var(--mk-accent)">offers</span></h1>
     <p class="mk-hero-sub" style="color:#000;font-weight:600;font-size:1.15rem;text-shadow:0 1px 8px rgba(255,255,255,.6)">Tender <strong style="color:#000">{{ tender_id }}</strong> — ranked by our explainable recommendation score.</p>
   </div>

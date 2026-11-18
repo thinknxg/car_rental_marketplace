@@ -1,8 +1,20 @@
 {% extends "templates/web.html" %}
 {% block title %}Complete Your Booking{% endblock %}
 {% block page_content %}
-<link rel="stylesheet" href="/assets/rental_marketplace/css/marketplace.css?v=202611183">
-{% include "rental_marketplace/templates/includes/site_nav.html" %}
+<link rel="stylesheet" href="/assets/rental_marketplace/css/marketplace.css?v=202611184">
+<div class="mk-hero" style="padding:0;min-height:0;background:#0F1115">
+  <div class="hp-nav">
+    <a class="hp-logo-link" href="/homepage"><img class="hp-logo" src="/files/thinkcarrent-logo-square-1024.png" alt="ThinkCarRent"></a>
+    <input type="checkbox" id="hp-nav-toggle" class="hp-nav-toggle" aria-hidden="true" tabindex="-1">
+    <label for="hp-nav-toggle" class="hp-nav-burger" aria-label="Menu"><span></span><span></span><span></span></label>
+    <div class="hp-nav-right">
+      <a href="https://wa.me/96895351035" target="_blank" rel="noopener" class="hp-nav-link">Help Center</a>
+      <a href="/become-supplier" class="hp-nav-pill">List Your Fleet</a>
+      <a href="/account/bookings" class="hp-nav-pill">My Booking</a>
+      {% if frappe.session.user == "Guest" %}<a href="/login" class="hp-nav-signin">Sign in</a>{% else %}<a href="/?cmd=web_logout" class="hp-nav-signin">Sign out</a>{% endif %}
+    </div>
+  </div>
+</div>
 <style>
   .mk-co-wrap{max-width:760px;margin:0 auto;padding:24px 0}
   .mk-co-title{font-family:var(--mk-disp);font-weight:800;font-size:1.6rem;margin-bottom:20px}

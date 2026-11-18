@@ -252,3 +252,7 @@ html, body{margin:0!important;padding:0!important}
 }
 .hp-footer-col .hp-footer-brand-row{height:auto!important;overflow:visible!important;margin-bottom:16px}
 .hp-footer-col .hp-footer-brand-row img{height:96px!important;width:auto!important;margin-top:0!important;border-radius:18px}
+
+/* mk-ui v6: header variants for inner pages */
+.mk-hero .hp-nav.hp-nav-bleed{margin-left:-20px;margin-right:-20px}
+.mk-hero .hp-nav.hp-nav-solid{background:rgba(15,17,21,.82)}
