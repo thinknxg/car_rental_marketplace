@@ -235,3 +235,20 @@ html, body{margin:0!important;padding:0!important}
   .mk-sitenav-brand img{height:60px}
   .hp-nav .hp-logo{height:78px}
 }
+
+/* mk-ui v5: hero header shared by homepage and fleet, footer logo shape */
+.mk-hero .hp-nav{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;position:relative;z-index:2;padding:24px 44px}
+.mk-hero .hp-nav-right{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.mk-hero .hp-nav-link{color:#fff;text-decoration:none;font-size:1.05rem;font-family:var(--mk-disp);font-weight:600}
+.mk-hero .hp-nav-pill{display:inline-flex;align-items:center;gap:6px;padding:12px 24px;border-radius:999px;border:1.5px solid rgba(255,255,255,.35);color:#fff;text-decoration:none;font-family:var(--mk-disp);font-weight:600;font-size:1.05rem}
+.mk-hero .hp-nav-pill:hover{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.6)}
+.mk-hero .hp-nav-signin{display:inline-flex;align-items:center;gap:6px;padding:12px 26px;border-radius:999px;background:#fff;color:var(--mk-ink);text-decoration:none;font-family:var(--mk-disp);font-weight:700;font-size:1.05rem}
+.mk-hero .hp-logo-link{display:block;line-height:0}
+@media (max-width:820px){
+  .mk-hero .hp-nav{padding:14px 16px}
+  .mk-hero .hp-nav .hp-nav-right{display:none;flex-basis:100%;flex-direction:column;align-items:stretch;gap:10px;padding:14px;margin-top:6px;border-radius:16px;background:rgba(15,23,42,.88)}
+  .mk-hero .hp-nav .hp-nav-toggle:checked ~ .hp-nav-right{display:flex}
+  .mk-hero .hp-nav .hp-nav-right a{justify-content:center;text-align:center;padding:14px 18px}
+}
+.hp-footer-col .hp-footer-brand-row{height:auto!important;overflow:visible!important;margin-bottom:16px}
+.hp-footer-col .hp-footer-brand-row img{height:96px!important;width:auto!important;margin-top:0!important;border-radius:18px}
