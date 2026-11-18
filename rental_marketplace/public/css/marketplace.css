@@ -219,3 +219,19 @@ html, body{margin:0!important;padding:0!important}
 @media (max-width:480px){
   .hp-nav .hp-logo{height:54px}
 }
+
+/* mk-ui v4: bigger logo on desktop and phones */
+.mk-sitenav{padding:12px 40px}
+.mk-sitenav-brand img{height:76px;border-radius:16px}
+.hp-nav{padding:24px 44px}
+.hp-nav .hp-logo{height:118px;border-radius:22px}
+@media (max-width:820px){
+  .mk-sitenav{padding:10px 16px}
+  .mk-sitenav-brand img{height:64px;border-radius:14px}
+  .hp-nav{padding:14px 16px}
+  .hp-nav .hp-logo{height:86px;border-radius:18px}
+}
+@media (max-width:480px){
+  .mk-sitenav-brand img{height:60px}
+  .hp-nav .hp-logo{height:78px}
+}
