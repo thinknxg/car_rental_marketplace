@@ -2,7 +2,7 @@
 {% block title %}Kreatao Operations{% endblock %}
 {% block page_content %}
 {% macro spark(vals, w=200, h=40) %}{% set mx = (vals|max) or 1 %}{% set n = vals|length %}<svg viewBox="0 0 {{ w }} {{ h }}" width="100%" height="{{ h }}" aria-hidden="true"><polyline fill="none" stroke="#7FB0FF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" points="{% for v in vals %}{{ (loop.index0 * w / (n-1 if n>1 else 1))|round(1) }},{{ (h-4 - (v / mx) * (h-8))|round(1) }} {% endfor %}"/></svg>{% endmacro %}
-<link rel="stylesheet" href="/assets/rental_marketplace/css/marketplace.css">
+<link rel="stylesheet" href="/assets/rental_marketplace/css/marketplace.css?v=20261118">
 <style>
 .mk-op-wrap{max-width:none;width:100%;margin:0;padding:32px 40px 64px;box-sizing:border-box;color:var(--mk-ink);font-family:var(--mk-body)}
 .mk-op-top{margin-bottom:24px}
