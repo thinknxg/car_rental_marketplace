@@ -1,0 +1,7 @@
+{"doctype":"DocType","name":"Supplier Settlement Line","module":"Car Rental Marketplace","istable":1,"engine":"InnoDB",
+"fields":[
+ {"fieldname":"booking","fieldtype":"Link","label":"Booking","options":"Booking","in_list_view":1},
+ {"fieldname":"line_type","fieldtype":"Select","label":"Type","options":"Booking\nRefund\nAdjustment","default":"Booking","in_list_view":1},
+ {"fieldname":"gross","fieldtype":"Currency","precision":2,"label":"Gross","in_list_view":1},
+ {"fieldname":"commission","fieldtype":"Currency","precision":2,"label":"Commission","in_list_view":1},
+ {"fieldname":"net","fieldtype":"Currency","precision":2,"label":"Net","in_list_view":1}]}

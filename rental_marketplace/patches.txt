@@ -1,0 +1,5 @@
+[pre_model_sync]
+rental_marketplace.patches.v1_1.rename_for_coexistence
+
+[post_model_sync]
+rental_marketplace.patches.v1_1.move_pricing_rules_off_erpnext

@@ -1,12 +1,12 @@
 <nav class="mk-sitenav" aria-label="Main">
-  <a class="mk-sitenav-brand" href="/homepage"><img src="/files/thinkcarrent-logo-square-1024.png" alt="ThinkCarRent"></a>
+  <a class="mk-sitenav-brand" href="/car-marketplace"><img src="/files/thinkcarrent-logo-square-1024.png" alt="ThinkCarRent"></a>
   <input type="checkbox" id="mk-nav-toggle" class="mk-nav-toggle" aria-hidden="true" tabindex="-1">
   <label for="mk-nav-toggle" class="mk-nav-burger" aria-label="Menu"><span></span><span></span><span></span></label>
   <div class="mk-sitenav-links">
-    <a href="/homepage">Home</a>
-    <a href="/fleet">Our Fleet</a>
-    <a href="/account/bookings">My Booking</a>
-    <a href="/become-supplier">List Your Fleet</a>
+    <a href="/car-marketplace">Home</a>
+    <a href="/car-marketplace/fleet">Our Fleet</a>
+    <a href="/car-marketplace/account/bookings">My Booking</a>
+    <a href="/car-marketplace/become-supplier">List Your Fleet</a>
     <a href="https://wa.me/96895351035" target="_blank" rel="noopener">Help Center</a>
     {% if frappe.session.user == "Guest" %}<a class="signin" href="/login">Sign in</a>{% else %}<a class="signin" href="/?cmd=web_logout">Sign out</a>{% endif %}
   </div>

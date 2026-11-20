@@ -1,0 +1,45 @@
+{% extends "templates/web.html" %}
+{% block title %}Supplier Finance{% endblock %}
+{% block page_content %}
+<link rel="stylesheet" href="/assets/rental_marketplace/css/marketplace.css?v=202611184">
+{% include "rental_marketplace/templates/includes/supplier_sidebar.html" %}
+<div class="mk-portal-main">
+<div class="mk-wrap">
+  <h1 class="mk-h1">Finance</h1>
+  <p class="mk-sub">Settlements are built from historical booking snapshots; today's commission rules never change past periods.</p>
+  <div class="mk-card">
+    <h3 style="margin:0 0 12px;font-size:1.05rem">Settlements</h3>
+    {% if not settlements %}<div class="mk-meta">No settlements generated yet (weekly).</div>{% endif %}
+    <table class="mk-table">{% if settlements %}
+      <tr><th>Settlement</th><th>Period</th><th>Gross</th><th>Commission</th><th>Refund adj.</th><th>Net payable</th><th>Status</th></tr>
+      {% for s in settlements %}
+      <tr>
+        <td><strong>{{ s.name }}</strong>{% if s.payment_reference %}<div class="mk-meta">ref {{ s.payment_reference }}</div>{% endif %}</td>
+        <td class="mk-meta">{{ s.period_start }} → {{ s.period_end }}</td>
+        <td>{{ "%.2f"|format(s.gross_booking_amount or 0) }}</td>
+        <td>−{{ "%.2f"|format(s.commission or 0) }}</td>
+        <td>−{{ "%.2f"|format(s.refunds or 0) }}</td>
+        <td><strong>{{ s.currency or "" }} {{ "%.2f"|format(s.net_payable or 0) }}</strong></td>
+        <td><span class="mk-badge {{ 'ok' if s.status=='Paid' else ('warn' if s.status in ('Failed','Disputed') else '') }}">{{ s.status }}</span></td>
+      </tr>
+      {% endfor %}{% endif %}
+    </table>
+  </div>
+  <div class="mk-card">
+    <h3 style="margin:0 0 12px;font-size:1.05rem">Unsettled ledger entries</h3>
+    {% if not unsettled %}<div class="mk-meta">Everything is settled.</div>{% endif %}
+    <table class="mk-table">{% if unsettled %}
+      <tr><th>Entry</th><th>Type</th><th>Booking</th><th style="text-align:right">Amount</th></tr>
+      {% for e in unsettled %}
+      <tr>
+        <td class="mk-meta">{{ e.name }}</td>
+        <td><span class="mk-badge">{{ e.entry_type }}</span></td>
+        <td><a href="/car-marketplace/supplier/bookings/{{ e.booking }}">{{ e.booking }}</a></td>
+        <td style="text-align:right">{{ e.currency }} {{ "%.2f"|format(e.amount or 0) }}</td>
+      </tr>
+      {% endfor %}{% endif %}
+    </table>
+  </div>
+</div>
+</div>
+{% endblock %}

@@ -53,14 +53,14 @@ def send(event, recipient, context=None):
         frappe.log_error(frappe.get_traceback(), f"notify email: {event}")
 
     try:
-        frappe.publish_realtime(f"marketplace:{event}",
+        frappe.publish_realtime(f"car_marketplace:{event}",
                                 message=context, user=recipient)
     except Exception:
         pass
 
 
 def notify_operations(subject, message=""):
-    ops = frappe.db.get_single_value("Marketplace Settings", "operations_email")
+    ops = frappe.db.get_single_value("Car Marketplace Settings", "operations_email")
     if not ops:
         return
     try:

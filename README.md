@@ -1,4 +1,4 @@
-# Rental Marketplace
+# Car Rental Marketplace (`rental_marketplace`)
 
 A production-oriented **tender/bid car-rental marketplace** on Frappe
 Framework v16. A customer submits a rental requirement; eligible,
@@ -7,7 +7,7 @@ one; the system creates a concurrency-safe booking, takes payment via
 an idempotent webhook, and settles suppliers from historical snapshots.
 
 Authoritative chain:
-`Rental Request → Tender → Offers → Accepted Offer → Booking → Payment
+`Car Rental Request → Tender → Offers → Accepted Offer → Booking → Payment
 → Rental → Refund/Settlement → Completion` — every transition is
 validated, authorized, transaction-safe, idempotent, audited.
 
@@ -24,7 +24,7 @@ bench build && bench restart
 
 ## Post-install checklist
 
-1. **Marketplace Settings** — currency, commission %, tender response
+1. **Car Marketplace Settings** — currency, commission %, tender response
    window, offer validity, payment-hold minutes, webhook secret,
    ranking weights.
 2. Create **Marketplace Locations** and confirm the seeded
@@ -32,10 +32,42 @@ bench build && bench restart
 3. Create **Marketplace Suppliers** → set status **Verified**, add
    **Service Areas** and **Portal Users** (link to Frappe Users with
    Supplier roles).
-4. Add **Marketplace Vehicles**, **Pricing Rules** (at minimum one
+4. Add **Marketplace Vehicles**, **Car Pricing Rules** (at minimum one
    global per vehicle class) and **Cancellation Policies**.
-5. Give customers the **Marketplace Customer** role (the spec's
+5. Give customers the **Car Marketplace Customer** role (the spec's
    "Customer" role name collides with ERPNext, hence the prefix).
+
+## Sharing a bench or site with other apps (v1.1)
+
+This app can be installed on the same bench, and the same site, as
+[thinkNXG Rental Marketplace](https://github.com/thinknxg/thinkNXG-Rental-Marketplace)
+(`thinknxg_rental_marketplace`) and ERPNext v16. To make that possible v1.1 renamed:
+
+| Before v1.1 | From v1.1 |
+|---|---|
+| Module `Rental Marketplace` | `Car Rental Marketplace` (folder `car_rental_marketplace/`) |
+| DocType `Rental Request` | `Car Rental Request` |
+| DocType `Marketplace Settings` | `Car Marketplace Settings` |
+| DocType `Marketplace Review` | `Car Marketplace Review` |
+| DocType `Marketplace Audit Event` | `Car Marketplace Audit Event` |
+| DocType `Pricing Rule` (clashed with ERPNext) | `Car Pricing Rule` |
+| Roles `Marketplace Admin / Operations / Finance / Support / Customer` | `Car Marketplace Admin / Operations / Finance / Support / Customer` |
+| Pages at `/homepage`, `/portal`, `/request`, `/supplier…`, `/operations`, ... | Under `/car-marketplace/…` (files in `www/car_marketplace/`) |
+| Realtime events `marketplace:<event>` | `car_marketplace:<event>` |
+
+The Python package (`rental_marketplace`), API paths (`rental_marketplace.api.*`), all other
+DocTypes, naming series and the `Supplier *` roles are unchanged.
+
+**Upgrading an existing site:** `bench --site <site> migrate`. The patches in
+`patches/v1_1/` rename the module, DocTypes and roles in place (tables are renamed, rows are
+kept), move this app's rules out of ERPNext's `Pricing Rule` table into `Car Pricing Rule`
+and give ERPNext its own Pricing Rule DocType back. Take a backup first, as for any migrate.
+After upgrading:
+
+- Update any bookmarks, links, QR codes or ads that point at the old root URLs. Only
+  `/paypal_return` redirects automatically (for PayPal sessions opened before the upgrade).
+  On a site that runs only this app you may add 301s for the old URLs in
+  **Website Settings → Route Redirects**.
 
 ## Architecture
 
@@ -114,29 +146,29 @@ traces never reach customers.
 
 ## Portals
 
-**Customer** — `/portal` dashboard (requests with live offer counts,
-bookings, action-needed banner) → `/request` (form; honours `?ref=`
-partner codes) → `/offers/<tender>` (ranked cards + accept) →
-`/account/bookings` (pay/cancel).
+**Customer** — `/car-marketplace/portal` dashboard (requests with live offer counts,
+bookings, action-needed banner) → `/car-marketplace/request` (form; honours `?ref=`
+partner codes) → `/car-marketplace/offers/<tender>` (ranked cards + accept) →
+`/car-marketplace/account/bookings` (pay/cancel).
 
-**Supplier** — `/supplier` dashboard (open tenders, live offers,
+**Supplier** — `/car-marketplace/supplier` dashboard (open tenders, live offers,
 upcoming/active/completed rentals, cancellation rate, finance
-snapshot) · `/supplier/tenders` (invitation inbox + inline offer
-submission) · `/supplier/fleet` (vehicles + active availability
-blocks) · `/supplier/bookings` (state-machine actions: confirm →
+snapshot) · `/car-marketplace/supplier/tenders` (invitation inbox + inline offer
+submission) · `/car-marketplace/supplier/fleet` (vehicles + active availability
+blocks) · `/car-marketplace/supplier/bookings` (state-machine actions: confirm →
 ready → pickup → activate → return → complete via
-`api.supplier_transition`) · `/supplier/finance` (settlements +
+`api.supplier_transition`) · `/car-marketplace/supplier/finance` (settlements +
 unsettled ledger entries).
 
-**Partner** — `/partner` for affiliates/agencies/API partners
+**Partner** — `/car-marketplace/partner` for affiliates/agencies/API partners
 (**Marketplace Partner** DocType: unique referral code, share of
-marketplace commission). Referral links (`/request?ref=CODE`)
+marketplace commission). Referral links (`/car-marketplace/request?ref=CODE`)
 attribute the request → the booking copies the partner and computes
 `partner_commission`; a Partner Commission ledger entry posts on
 confirmation. The portal shows the referral link, attributed
 requests/bookings, earned (completed), pipeline, and paid-out totals.
 
-**Operations** — `/operations` (operator roles only): live counters
+**Operations** — `/car-marketplace/operations` (operator roles only): live counters
 (open tenders, pending payments, disputes, failed webhooks), cached
 metrics, supplier verification queue with Verify/Reject actions,
 settlement approval queue (Finance-gated Approve), recent refunds and
@@ -161,7 +193,7 @@ against a bench site can build on the service layer entrypoints.
 
 ## Notes & deviations
 
-- Roles use spec names with two adjustments: **Marketplace Customer**
+- Roles use spec names with two adjustments: **Car Marketplace Customer**
   (ERPNext "Customer" collision) and supplier scoping via the
   **Supplier Portal User** child table.
 - The payment provider is a stub (`provider_intent_id` generated
@@ -195,11 +227,11 @@ custom fields on Booking (`collect_full_amount`, `sales_invoice`, `extras_snapsh
 `paypal_sandbox` (1 = sandbox, 0 = live, as a number), `host_name` (https URL of the site).
 Do not set `allow_demo_payments` in production.
 
-**Desk > Marketplace Settings**: default currency, default commission %, default tax %, webhook secret.
+**Desk > Car Marketplace Settings**: default currency, default commission %, default tax %, webhook secret.
 
-**Desk > Pricing Rule / Cancellation Policy / Marketplace Location**: your business rules and locations.
+**Desk > Car Pricing Rule / Cancellation Policy / Marketplace Location**: your business rules and locations.
 
-**Users**: give staff the roles Marketplace Admin / Operations / Finance; suppliers get Supplier Admin /
+**Users**: give staff the roles Car Marketplace Admin / Operations / Finance; suppliers get Supplier Admin /
 Manager / Agent through the Operations page ("Set Login").
 
 **Scheduler** must be enabled: offers expire, tenders close, settlements are generated and payments
@@ -209,12 +241,12 @@ reconciled by scheduled jobs.
 
 | Route | Purpose |
 |---|---|
-| /homepage, /fleet, /request | Customer search and rental request |
-| /offers/<tender>, /account/bookings, /portal | Compare offers, pay, manage bookings |
-| /become-supplier | Supplier application |
-| /supplier, /supplier/tenders, /supplier/fleet, /supplier/bookings, /supplier/finance | Supplier portal |
-| /partner | Partner commissions |
-| /operations | Operations console (month filter, finance, approvals, health) |
+| /car-marketplace, /car-marketplace/fleet, /car-marketplace/request | Customer search and rental request |
+| /car-marketplace/offers/<tender>, /car-marketplace/account/bookings, /car-marketplace/portal | Compare offers, pay, manage bookings |
+| /car-marketplace/become-supplier | Supplier application |
+| /car-marketplace/supplier, /car-marketplace/supplier/tenders, /car-marketplace/supplier/fleet, /car-marketplace/supplier/bookings, /car-marketplace/supplier/finance | Supplier portal |
+| /car-marketplace/partner | Partner commissions |
+| /car-marketplace/operations | Operations console (month filter, finance, approvals, health) |
 
 ## Money flow
 
@@ -222,7 +254,7 @@ reconciled by scheduled jobs.
 - Full payment: the customer pays the full amount online; the supplier is paid by settlement after the
   booking is Completed.
 - Booking lifecycle: Pending Payment > Confirmed > Supplier Confirmed > Ready for Pickup > Picked Up >
-  Active Rental > Returned > Completed (suppliers advance it from /supplier/bookings).
+  Active Rental > Returned > Completed (suppliers advance it from /car-marketplace/supplier/bookings).
 
 ## Tests
 

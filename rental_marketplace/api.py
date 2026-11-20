@@ -171,7 +171,7 @@ def _get_or_create_guest_customer(kwargs):
         "user_type": "Website User",
     })
     user.insert(ignore_permissions=True)
-    user.add_roles("Marketplace Customer")
+    user.add_roles("Car Marketplace Customer")
     frappe.db.commit()
     return user.name
 
@@ -222,7 +222,7 @@ def create_rental_request(**kwargs):
               "preferred_make", "preferred_model", "transmission",
               "fuel_type", "seats_required", "driver_age",
               "country_of_residence", "special_requirements", "currency")
-    doc = frappe.new_doc("Rental Request")
+    doc = frappe.new_doc("Car Rental Request")
     doc.customer = customer_user
     for f in fields:
         if kwargs.get(f) not in (None, ""):
@@ -240,7 +240,7 @@ def create_rental_request(**kwargs):
             doc.partner = partner
     doc.status = "Submitted"
     doc.insert(ignore_permissions=True)
-    audit.log("rental_request_submitted", "Rental Request", doc.name)
+    audit.log("rental_request_submitted", "Car Rental Request", doc.name)
 
     tender = tender_service.create_tender_from_request(doc.name)
     return {"request": doc.name, "tender": tender.name,
@@ -251,7 +251,7 @@ def create_rental_request(**kwargs):
 @api_handler
 def get_rental_request(request_id):
     _require_login()
-    doc = frappe.get_doc("Rental Request", request_id)
+    doc = frappe.get_doc("Car Rental Request", request_id)
     if doc.customer != frappe.session.user and \
             not perms.is_operator(frappe.session.user):
         frappe.throw("Not your request.", frappe.PermissionError)
@@ -273,7 +273,7 @@ def get_tender_offers(tender_id, sort="recommended"):
             not perms.is_operator(frappe.session.user):
         frappe.throw("Not your tender.", frappe.PermissionError)
 
-    settings = frappe.get_single("Marketplace Settings")
+    settings = frappe.get_single("Car Marketplace Settings")
     offers = frappe.get_all(
         "Offer",
         filters={"tender": tender_id,
@@ -639,8 +639,8 @@ def payment_webhook(**kwargs):
 @frappe.whitelist(allow_guest=False)
 @api_handler
 def verify_supplier(supplier):
-    if not (set(frappe.get_roles()) & {"Marketplace Admin",
-                                       "Marketplace Operations",
+    if not (set(frappe.get_roles()) & {"Car Marketplace Admin",
+                                       "Car Marketplace Operations",
                                        "System Manager"}):
         frappe.throw("Operators only.", frappe.PermissionError)
     doc = frappe.get_doc("Marketplace Supplier", supplier)
@@ -661,8 +661,8 @@ def verify_supplier(supplier):
 @frappe.whitelist(allow_guest=False)
 @api_handler
 def suspend_supplier(supplier, reason=""):
-    if not (set(frappe.get_roles()) & {"Marketplace Admin",
-                                       "Marketplace Operations",
+    if not (set(frappe.get_roles()) & {"Car Marketplace Admin",
+                                       "Car Marketplace Operations",
                                        "System Manager"}):
         frappe.throw("Operators only.", frappe.PermissionError)
     doc = frappe.get_doc("Marketplace Supplier", supplier)
@@ -676,8 +676,8 @@ def suspend_supplier(supplier, reason=""):
 @frappe.whitelist(allow_guest=False)
 @api_handler
 def reactivate_supplier(supplier):
-    if not (set(frappe.get_roles()) & {"Marketplace Admin",
-                                       "Marketplace Operations",
+    if not (set(frappe.get_roles()) & {"Car Marketplace Admin",
+                                       "Car Marketplace Operations",
                                        "System Manager"}):
         frappe.throw("Operators only.", frappe.PermissionError)
     doc = frappe.get_doc("Marketplace Supplier", supplier)
@@ -693,8 +693,8 @@ def reactivate_supplier(supplier):
 @api_handler
 def approve_booking(booking):
     from rental_marketplace.services import booking_service
-    if not (set(frappe.get_roles()) & {"Marketplace Admin",
-                                       "Marketplace Operations",
+    if not (set(frappe.get_roles()) & {"Car Marketplace Admin",
+                                       "Car Marketplace Operations",
                                        "System Manager"}):
         frappe.throw("Operators only.", frappe.PermissionError)
     doc = booking_service.transition(booking, "approve")
@@ -705,8 +705,8 @@ def approve_booking(booking):
 @api_handler
 def reject_booking(booking, reason=""):
     from rental_marketplace.services import booking_service
-    if not (set(frappe.get_roles()) & {"Marketplace Admin",
-                                       "Marketplace Operations",
+    if not (set(frappe.get_roles()) & {"Car Marketplace Admin",
+                                       "Car Marketplace Operations",
                                        "System Manager"}):
         frappe.throw("Operators only.", frappe.PermissionError)
     doc = booking_service.transition(booking, "reject", metadata={"reason": reason})
@@ -719,8 +719,8 @@ def create_supplier_login(supplier, email, password, role_level="Supplier Admin"
     """Creates (or reuses) a User with the given email + password and
     links them into this Marketplace Supplier's portal, so they can log
     in to the supplier portal immediately with those credentials."""
-    if not (set(frappe.get_roles()) & {"Marketplace Admin",
-                                       "Marketplace Operations",
+    if not (set(frappe.get_roles()) & {"Car Marketplace Admin",
+                                       "Car Marketplace Operations",
                                        "System Manager"}):
         frappe.throw("Operators only.", frappe.PermissionError)
 
@@ -734,8 +734,8 @@ def create_supplier_login(supplier, email, password, role_level="Supplier Admin"
 
     if frappe.db.exists("User", email):
         user = frappe.get_doc("User", email)
-        privileged = {"System Manager", "Marketplace Admin", "Marketplace Operations",
-                      "Marketplace Finance", "Administrator"} & set(frappe.get_roles(user.name))
+        privileged = {"System Manager", "Car Marketplace Admin", "Car Marketplace Operations",
+                      "Car Marketplace Finance", "Administrator"} & set(frappe.get_roles(user.name))
         linked_here = any(r.user == user.name for r in sup.portal_users)
         if user.user_type == "System User" or privileged or not linked_here:
             frappe.throw("That email already belongs to another account. Use a "
@@ -783,8 +783,8 @@ def mark_booking_paid(booking, payment_reference=None):
 @frappe.whitelist(allow_guest=False)
 @api_handler
 def approve_settlement(settlement):
-    if not (set(frappe.get_roles()) & {"Marketplace Finance",
-                                       "Marketplace Admin",
+    if not (set(frappe.get_roles()) & {"Car Marketplace Finance",
+                                       "Car Marketplace Admin",
                                        "System Manager"}):
         frappe.throw("Finance only.", frappe.PermissionError)
     doc = frappe.get_doc("Supplier Settlement", settlement)
@@ -839,7 +839,7 @@ def partner_summary():
                    if b.booking_status in ("Confirmed", "Supplier Confirmed",
                                            "Ready for Pickup", "Picked Up",
                                            "Active Rental", "Returned"))
-    requests_count = frappe.db.count("Rental Request",
+    requests_count = frappe.db.count("Car Rental Request",
                                      {"partner": partner.name})
     return {"partner": partner, "bookings": bookings,
             "earned": round(earned, 2), "pipeline": round(pipeline, 2),
@@ -909,7 +909,7 @@ def download_invoice(booking_id, download=0):
         frappe.throw("Not permitted.", frappe.PermissionError)
     if booking.payment_status == "Unpaid":
         frappe.throw("Invoice is only available once payment has been made.")
-    settings = frappe.get_single("Marketplace Settings")
+    settings = frappe.get_single("Car Marketplace Settings")
     extras_lines = json.loads(booking.extras_snapshot or "[]")
     from frappe.utils import date_diff
     rental_days = max(date_diff(booking.dropoff_datetime,
@@ -964,7 +964,7 @@ def add_booking_extras(booking_id, extras, idempotency_key=None):
     """extras: JSON list of {"extra": <Marketplace Extra name>,
     "quantity": int}. Recomputes extras_amount/tax/commission/gross
     the same way pricing_service.compute() would, using this
-    booking's applicable Pricing Rule (or supplier/settings
+    booking's applicable Car Pricing Rule (or supplier/settings
     fallbacks), and folds the delta into the booking."""
     _require_login()
 
@@ -1009,9 +1009,9 @@ def add_booking_extras(booking_id, extras, idempotency_key=None):
         if extras_total <= 0:
             frappe.throw("Selected extras total to zero.")
 
-        settings = frappe.get_single("Marketplace Settings").as_dict()
+        settings = frappe.get_single("Car Marketplace Settings").as_dict()
         rules = frappe.get_all(
-            "Pricing Rule",
+            "Car Pricing Rule",
             filters={"supplier": booking.supplier,
                      "vehicle_class": vehicle_class, "active": 1},
             fields=["name", "supplier", "vehicle_class", "location",
@@ -1110,9 +1110,9 @@ def remove_booking_extra(booking_id, extra, idempotency_key=None):
             "Marketplace Vehicle", booking.vehicle, "vehicle_class")
         rental_days = max(date_diff(booking.dropoff_datetime,
                                     booking.pickup_datetime), 1)
-        settings = frappe.get_single("Marketplace Settings").as_dict()
+        settings = frappe.get_single("Car Marketplace Settings").as_dict()
         rules = frappe.get_all(
-            "Pricing Rule",
+            "Car Pricing Rule",
             filters={"supplier": booking.supplier,
                      "vehicle_class": vehicle_class, "active": 1},
             fields=["name", "supplier", "vehicle_class", "location",
@@ -1174,7 +1174,7 @@ _LOCATION_TYPES = ("Airport", "City", "Port", "Hotel Zone", "Other")
 
 
 def _require_operator_role():
-    if not (set(frappe.get_roles()) & {"Marketplace Admin", "Marketplace Operations", "System Manager"}):
+    if not (set(frappe.get_roles()) & {"Car Marketplace Admin", "Car Marketplace Operations", "System Manager"}):
         frappe.throw("Operators only.", frappe.PermissionError)
 
 

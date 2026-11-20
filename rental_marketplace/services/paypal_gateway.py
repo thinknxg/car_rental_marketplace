@@ -72,9 +72,9 @@ def create_order(intent):
     token = _get_access_token()
 
     return_url = get_url(
-        f"/paypal_return?intent={intent.name}")
+        f"/car-marketplace/paypal-return?intent={intent.name}")
     cancel_url = get_url(
-        f"/paypal_return?intent={intent.name}&cancelled=1")
+        f"/car-marketplace/paypal-return?intent={intent.name}&cancelled=1")
 
     body = {
         "intent": "CAPTURE",

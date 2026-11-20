@@ -58,7 +58,7 @@ def submit_offer(tender_name, supplier, vehicle, discount=0, extras=None,
         one_way=one_way, deposit_amount=deposit_amount,
         currency=tender.currency, vehicle=vehicle)
 
-    settings = frappe.get_single("Marketplace Settings")
+    settings = frappe.get_single("Car Marketplace Settings")
     if not cancellation_policy:
         cancellation_policy = frappe.db.get_value(
             "Marketplace Supplier", supplier, "default_cancellation_policy")
@@ -105,7 +105,7 @@ def submit_offer(tender_name, supplier, vehicle, discount=0, extras=None,
     ts.db_set("invitation_status", "Responded")
     ts.db_set("responded_at", now_datetime())
 
-    frappe.db.set_value("Rental Request", tender.rental_request,
+    frappe.db.set_value("Car Rental Request", tender.rental_request,
                         "status", "Offers Received")
     audit.log("offer_submitted", "Offer", offer.name,
               new_state="Submitted",

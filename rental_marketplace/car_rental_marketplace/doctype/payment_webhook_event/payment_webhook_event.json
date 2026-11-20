@@ -1,0 +1,17 @@
+{"doctype":"DocType","name":"Payment Webhook Event","module":"Car Rental Marketplace","naming_rule":"Expression","autoname":"format:WHE-{YYYY}-{#######}","in_create":1,"engine":"InnoDB",
+"fields":[
+ {"fieldname":"provider","fieldtype":"Data","label":"Provider","in_list_view":1},
+ {"fieldname":"provider_event_id","fieldtype":"Data","label":"Provider Event ID","reqd":1,"unique":1,"in_list_view":1},
+ {"fieldname":"col_a","fieldtype":"Column Break"},
+ {"fieldname":"event_type","fieldtype":"Data","label":"Event Type","in_list_view":1},
+ {"fieldname":"processing_status","fieldtype":"Select","label":"Processing","options":"Received\nQueued\nProcessed\nFailed\nIgnored","default":"Received","in_list_view":1,"in_filter":1},
+ {"fieldname":"sec_payload","fieldtype":"Section Break","label":"Raw Payload (retained for reconciliation)"},
+ {"fieldname":"raw_payload","fieldtype":"JSON","label":"Raw Payload","read_only":1},
+ {"fieldname":"signature_valid","fieldtype":"Check","label":"Signature Valid","read_only":1},
+ {"fieldname":"col_b","fieldtype":"Column Break"},
+ {"fieldname":"received_at","fieldtype":"Datetime","label":"Received","read_only":1},
+ {"fieldname":"processed_at","fieldtype":"Datetime","label":"Processed","read_only":1},
+ {"fieldname":"error","fieldtype":"Small Text","label":"Error","read_only":1}],
+"permissions":[
+ {"role":"Car Marketplace Admin","read":1,"report":1},
+ {"role":"Car Marketplace Finance","read":1,"report":1}]}

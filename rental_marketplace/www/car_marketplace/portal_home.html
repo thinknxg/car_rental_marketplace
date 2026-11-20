@@ -1,0 +1,53 @@
+{% extends "templates/web.html" %}
+{% block title %}My Marketplace{% endblock %}
+{% block page_content %}
+<link rel="stylesheet" href="/assets/rental_marketplace/css/marketplace.css?v=202611184">
+{% include "rental_marketplace/templates/includes/portal_sidebar.html" %}
+<div class="mk-portal-main">
+<div class="mk-wrap">
+  <h1 class="mk-h1">My marketplace</h1>
+  <p class="mk-sub">{{ frappe.session.user }}{% if profile and profile.verification_status %} · <span class="mk-badge {{ 'ok' if profile.verification_status=='Verified' else '' }}">{{ profile.verification_status }}</span>{% endif %}
+     &nbsp;·&nbsp; <a href="/car-marketplace/request">+ New rental request</a> · <a href="/car-marketplace/account/bookings">All bookings</a></p>
+  {% if action_needed %}
+  <div class="mk-card" style="border-color:#f2c94c;background:#fffdf5">
+    <strong>Action needed:</strong>
+    {% for b in action_needed %}
+      <a href="/car-marketplace/account/bookings">{{ b.name }}</a> — pay {{ b.currency }} {{ "%.2f"|format(b.amount_due or 0) }} to confirm.{% if not loop.last %} · {% endif %}
+    {% endfor %}
+  </div>
+  {% endif %}
+  <div class="mk-card">
+    <h3 style="margin:0 0 12px;font-size:1.05rem">My requests</h3>
+    {% if not requests %}<div class="mk-meta">No requests yet — <a href="/car-marketplace/request">create your first one</a>.</div>{% endif %}
+    <table class="mk-table">{% if requests %}
+      <tr><th>Request</th><th>Trip</th><th>Status</th><th>Offers</th><th></th></tr>
+      {% for r in requests %}
+      <tr>
+        <td><strong>{{ r.name }}</strong></td>
+        <td>{{ r.vehicle_class }} · {{ r.pickup_location }} · {{ frappe.utils.format_datetime(r.pickup_datetime, "d MMM HH:mm") }}</td>
+        <td><span class="mk-badge {{ 'ok' if r.status in ('Accepted','Offers Received') else '' }}">{{ r.status }}</span></td>
+        <td>{{ r.offer_count }}</td>
+        <td>{% if r.tender and r.offer_count %}<a href="/car-marketplace/offers/{{ r.tender }}">View offers →</a>{% endif %}</td>
+      </tr>
+      {% endfor %}{% endif %}
+    </table>
+  </div>
+  <div class="mk-card">
+    <h3 style="margin:0 0 12px;font-size:1.05rem">Recent bookings</h3>
+    {% if not bookings %}<div class="mk-meta">No bookings yet.</div>{% endif %}
+    <table class="mk-table">{% if bookings %}
+      <tr><th>Booking</th><th>Pickup</th><th>Status</th><th>Payment</th><th style="text-align:right">Total</th></tr>
+      {% for b in bookings %}
+      <tr>
+        <td><strong>{{ b.name }}</strong></td>
+        <td>{{ b.pickup_location }} · {{ frappe.utils.format_datetime(b.pickup_datetime, "d MMM HH:mm") }}</td>
+        <td><span class="mk-badge {{ 'ok' if b.booking_status in ('Confirmed','Completed','Active Rental') else ('warn' if b.booking_status=='Pending Payment' else '') }}">{{ b.booking_status }}</span></td>
+        <td>{{ b.payment_status }}</td>
+        <td style="text-align:right">{{ b.currency }} {{ "%.2f"|format(b.gross_amount or 0) }}</td>
+      </tr>
+      {% endfor %}{% endif %}
+    </table>
+  </div>
+</div>
+</div>
+{% endblock %}

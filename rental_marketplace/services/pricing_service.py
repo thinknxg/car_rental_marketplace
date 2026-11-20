@@ -180,11 +180,11 @@ def price_offer(supplier, vehicle_class, pickup_location, pickup_date,
                 rental_days, extras=None, discount=0, one_way=False,
                 delivery=False, deposit_amount=0, country=None, currency=None,
                 vehicle=None):
-    settings = frappe.get_single("Marketplace Settings").as_dict()
+    settings = frappe.get_single("Car Marketplace Settings").as_dict()
     sup_comm = frappe.db.get_value("Marketplace Supplier", supplier,
                                    "commission_percentage")
     rules = frappe.get_all(
-        "Pricing Rule", filters={"active": 1},
+        "Car Pricing Rule", filters={"active": 1},
         fields=["name", "supplier", "vehicle_class", "location", "country",
                 "start_date", "end_date", "minimum_days", "maximum_days",
                 "daily_rate", "weekly_rate", "monthly_rate", "one_way_fee",
@@ -199,7 +199,7 @@ def price_offer(supplier, vehicle_class, pickup_location, pickup_date,
         "deposit_amount": deposit_amount, "currency": currency,
         "supplier_commission_percentage": sup_comm,
     }
-    # If no admin Pricing Rule matches, fall back to the vehicle's own
+    # If no admin Car Pricing Rule matches, fall back to the vehicle's own
     # daily/weekly/monthly rate (set by the supplier on their fleet page).
     if vehicle and not select_rule(rules, ctx):
         vrate = frappe.db.get_value(

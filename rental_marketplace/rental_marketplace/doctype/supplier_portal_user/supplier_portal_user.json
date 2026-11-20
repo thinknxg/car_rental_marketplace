@@ -1,4 +1,0 @@
-{"doctype":"DocType","name":"Supplier Portal User","module":"Rental Marketplace","istable":1,"engine":"InnoDB",
-"fields":[
- {"fieldname":"user","fieldtype":"Link","label":"User","options":"User","reqd":1,"in_list_view":1},
- {"fieldname":"role_level","fieldtype":"Select","label":"Role","options":"Supplier Admin\nSupplier Manager\nSupplier Agent\nSupplier Finance","default":"Supplier Agent","in_list_view":1}]}
