@@ -14,8 +14,8 @@ def create_tender_from_request(request_name, strategy=None):
     Matching runs inline for small candidate sets and is enqueued
     beyond that threshold.
     """
-    request = frappe.get_doc("Rental Request", request_name)
-    settings = frappe.get_single("Marketplace Settings")
+    request = frappe.get_doc("Car Rental Request", request_name)
+    settings = frappe.get_single("Car Marketplace Settings")
 
     tender = frappe.new_doc("Tender")
     tender.rental_request = request.name
@@ -85,7 +85,7 @@ def close_tender(tender_name, reason="deadline"):
     tender.flags.via_service = True
     tender.db_set("status", new_status)
     tender.db_set("closed_at", now_datetime())
-    frappe.db.set_value("Rental Request", tender.rental_request, "status",
+    frappe.db.set_value("Car Rental Request", tender.rental_request, "status",
                         "Customer Reviewing" if offer_count else "Expired")
     audit.log("tender_closed", "Tender", tender.name,
               old_state="Open", new_state=new_status,

@@ -30,8 +30,8 @@ from rental_marketplace.services import audit, notification_service
 from rental_marketplace.exceptions import (
     BookingNotFound, PaymentAlreadyProcessed)
 
-OPERATOR_ROLES = {"Marketplace Admin", "Marketplace Operations",
-                  "Marketplace Finance", "System Manager"}
+OPERATOR_ROLES = {"Car Marketplace Admin", "Car Marketplace Operations",
+                  "Car Marketplace Finance", "System Manager"}
 
 
 def create_payment_intent(booking_name, customer_user, full_payment=False):
@@ -43,7 +43,7 @@ def create_payment_intent(booking_name, customer_user, full_payment=False):
     exists as soon as the customer reaches the payment step."""
     booking = frappe.get_doc("Booking", booking_name)
     if booking.customer != customer_user and \
-            "Marketplace Admin" not in frappe.get_roles():
+            "Car Marketplace Admin" not in frappe.get_roles():
         frappe.throw("Not your booking.", frappe.PermissionError)
 
     if full_payment:
@@ -631,7 +631,7 @@ def simulate_demo_payment(intent_name):
 def verify_signature(raw_body, signature):
     secret = None
     try:
-        secret = frappe.get_single("Marketplace Settings").get_password(
+        secret = frappe.get_single("Car Marketplace Settings").get_password(
             "webhook_secret", raise_exception=False)
     except Exception:
         pass

@@ -1,5 +1,5 @@
 app_name = "rental_marketplace"
-app_title = "Rental Marketplace"
+app_title = "Car Rental Marketplace"
 app_publisher = "Kreatao"
 app_description = "Tender/bid-based car rental marketplace"
 app_email = "dev@kreatao.com"
@@ -8,14 +8,17 @@ app_license = "MIT"
 required_apps = ["erpnext"]
 
 after_install = "rental_marketplace.install.after_install"
-after_migrate = ["rental_marketplace.install.ensure_custom_fields"]
+after_migrate = [
+    "rental_marketplace.install.ensure_roles",
+    "rental_marketplace.install.ensure_custom_fields",
+]
 
 # ── Fixtures ───────────────────────────────────────────────────────────────────
 fixtures = [
     {"dt": "Role", "filters": [["role_name", "in", [
-        "Marketplace Admin", "Marketplace Operations", "Marketplace Finance",
-        "Marketplace Support", "Supplier Admin", "Supplier Manager",
-        "Supplier Agent", "Supplier Finance", "Marketplace Customer"]]]},
+        "Car Marketplace Admin", "Car Marketplace Operations", "Car Marketplace Finance",
+        "Car Marketplace Support", "Supplier Admin", "Supplier Manager",
+        "Supplier Agent", "Supplier Finance", "Car Marketplace Customer"]]]},
 ]
 
 # ── Doc events ─────────────────────────────────────────────────────────────────
@@ -48,35 +51,48 @@ scheduler_events = {
 }
 
 # ── Website routes ─────────────────────────────────────────────────────────────
+# Every public page lives under /car-marketplace so this app can share a site with
+# other apps (Frappe's own /portal, thinknxg_rental_marketplace's /marketplace, ...).
+# Page files are in www/car_marketplace/; these rules give them hyphenated URLs.
+_P = "/car-marketplace"
 website_route_rules = [
-    {"from_route": "/homepage",             "to_route": "homepage"},
-    {"from_route": "/portal",               "to_route": "portal_home"},
-    {"from_route": "/request",              "to_route": "request"},
-    {"from_route": "/fleet",                "to_route": "fleet"},
-    {"from_route": "/offers/<tender_id>",   "to_route": "offers"},
-    {"from_route": "/account/bookings",     "to_route": "my_bookings"},
-    {"from_route": "/supplier",             "to_route": "supplier_home"},
-    {"from_route": "/supplier/tenders",     "to_route": "supplier_tenders"},
-    {"from_route": "/supplier/fleet",       "to_route": "supplier_fleet"},
-    {"from_route": "/supplier/fleet/<vehicle_id>", "to_route": "supplier_vehicle_detail"},
-    {"from_route": "/supplier/bookings",    "to_route": "supplier_bookings"},
-    {"from_route": "/supplier/bookings/<booking_id>", "to_route": "supplier_booking_detail"},
-    {"from_route": "/supplier/finance",     "to_route": "supplier_finance"},
-    {"from_route": "/partner",              "to_route": "partner_portal"},
-    {"from_route": "/operations",           "to_route": "operations"},
-    {"from_route": "/become-supplier",      "to_route": "become_supplier"},
+    {"from_route": _P,                              "to_route": "car_marketplace/homepage"},
+    {"from_route": _P + "/portal",                  "to_route": "car_marketplace/portal_home"},
+    {"from_route": _P + "/request",                 "to_route": "car_marketplace/request"},
+    {"from_route": _P + "/fleet",                   "to_route": "car_marketplace/fleet"},
+    {"from_route": _P + "/car",                     "to_route": "car_marketplace/car"},
+    {"from_route": _P + "/checkout",                "to_route": "car_marketplace/checkout"},
+    {"from_route": _P + "/paypal-return",           "to_route": "car_marketplace/paypal_return"},
+    {"from_route": _P + "/offers/<tender_id>",      "to_route": "car_marketplace/offers"},
+    {"from_route": _P + "/account/bookings",        "to_route": "car_marketplace/my_bookings"},
+    {"from_route": _P + "/supplier",                "to_route": "car_marketplace/supplier_home"},
+    {"from_route": _P + "/supplier/tenders",        "to_route": "car_marketplace/supplier_tenders"},
+    {"from_route": _P + "/supplier/fleet",          "to_route": "car_marketplace/supplier_fleet"},
+    {"from_route": _P + "/supplier/fleet/<vehicle_id>", "to_route": "car_marketplace/supplier_vehicle_detail"},
+    {"from_route": _P + "/supplier/bookings",       "to_route": "car_marketplace/supplier_bookings"},
+    {"from_route": _P + "/supplier/bookings/<booking_id>", "to_route": "car_marketplace/supplier_booking_detail"},
+    {"from_route": _P + "/supplier/finance",        "to_route": "car_marketplace/supplier_finance"},
+    {"from_route": _P + "/partner",                 "to_route": "car_marketplace/partner_portal"},
+    {"from_route": _P + "/operations",              "to_route": "car_marketplace/operations"},
+    {"from_route": _P + "/become-supplier",         "to_route": "car_marketplace/become_supplier"},
+]
+
+# PayPal sessions opened before the route move still return to the old URL.
+# The path is specific to this app, so keeping it as a redirect claims nothing generic.
+website_redirects = [
+    {"source": "/paypal_return", "target": _P + "/paypal-return", "forward_query_parameters": True},
 ]
 
 portal_menu_items = [
-    {"title": "My Marketplace", "route": "/portal",
-     "role": "Marketplace Customer"},
-    {"title": "Supplier Dashboard", "route": "/supplier",
+    {"title": "My Marketplace", "route": _P + "/portal",
+     "role": "Car Marketplace Customer"},
+    {"title": "Supplier Dashboard", "route": _P + "/supplier",
      "role": "Supplier Agent"},
 ]
 
 # ── Permissions ────────────────────────────────────────────────────────────────
 permission_query_conditions = {
-    "Rental Request":      "rental_marketplace.permissions.rental_request_query",
+    "Car Rental Request":      "rental_marketplace.permissions.rental_request_query",
     "Tender Supplier":     "rental_marketplace.permissions.tender_supplier_query",
     "Offer":               "rental_marketplace.permissions.offer_query",
     "Booking":             "rental_marketplace.permissions.booking_query",

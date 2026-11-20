@@ -1,0 +1,113 @@
+{
+ "doctype": "DocType",
+ "name": "Marketplace Ledger Entry",
+ "module": "Car Rental Marketplace",
+ "naming_rule": "Expression",
+ "autoname": "format:MLE-{YYYY}-{#######}",
+ "in_create": 1,
+ "engine": "InnoDB",
+ "fields": [
+  {
+   "fieldname": "posting_datetime",
+   "fieldtype": "Datetime",
+   "label": "Posted",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "entry_type",
+   "fieldtype": "Select",
+   "label": "Entry Type",
+   "options": "Customer Receipt\nMarketplace Commission\nSupplier Payable\nCustomer Refund\nCommission Reversal\nSupplier Adjustment\nTax\nPartner Commission",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_filter": 1
+  },
+  {
+   "fieldname": "col_a",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "booking",
+   "fieldtype": "Link",
+   "label": "Booking",
+   "options": "Booking",
+   "in_list_view": 1,
+   "in_filter": 1
+  },
+  {
+   "fieldname": "supplier",
+   "fieldtype": "Link",
+   "label": "Supplier",
+   "options": "Marketplace Supplier",
+   "in_filter": 1
+  },
+  {
+   "fieldname": "partner",
+   "fieldtype": "Link",
+   "label": "Partner",
+   "options": "Marketplace Partner",
+   "in_filter": 1
+  },
+  {
+   "fieldname": "sec_amount",
+   "fieldtype": "Section Break",
+   "label": "Amount"
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "precision": 2,
+   "label": "Amount",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Data",
+   "label": "Currency"
+  },
+  {
+   "fieldname": "col_b",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "reference_doctype",
+   "fieldtype": "Data",
+   "label": "Reference DocType"
+  },
+  {
+   "fieldname": "reference_name",
+   "fieldtype": "Dynamic Link",
+   "label": "Reference",
+   "options": "reference_doctype"
+  },
+  {
+   "fieldname": "settled",
+   "fieldtype": "Check",
+   "label": "Included in Settlement",
+   "default": 0,
+   "in_filter": 1
+  },
+  {
+   "fieldname": "settlement",
+   "fieldtype": "Link",
+   "label": "Settlement",
+   "options": "Supplier Settlement"
+  }
+ ],
+ "permissions": [
+  {
+   "role": "Car Marketplace Admin",
+   "read": 1,
+   "report": 1,
+   "export": 1
+  },
+  {
+   "role": "Car Marketplace Finance",
+   "read": 1,
+   "report": 1,
+   "export": 1
+  }
+ ]
+}

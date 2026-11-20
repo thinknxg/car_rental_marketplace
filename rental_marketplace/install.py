@@ -1,20 +1,24 @@
 import frappe
 
-ROLES = ["Marketplace Admin", "Marketplace Operations", "Marketplace Finance",
-         "Marketplace Support", "Supplier Admin", "Supplier Manager",
-         "Supplier Agent", "Supplier Finance", "Marketplace Customer"]
+ROLES = ["Car Marketplace Admin", "Car Marketplace Operations", "Car Marketplace Finance",
+         "Car Marketplace Support", "Supplier Admin", "Supplier Manager",
+         "Supplier Agent", "Supplier Finance", "Car Marketplace Customer"]
 
 VEHICLE_CLASSES = [
     ("Economy", 1), ("Compact", 2), ("Sedan", 3), ("SUV", 4),
     ("Luxury", 5), ("Van", 6), ("Convertible", 7), ("Electric", 8)]
 
 
-def after_install():
+def ensure_roles():
     for role in ROLES:
         if not frappe.db.exists("Role", role):
             frappe.get_doc({"doctype": "Role", "role_name": role,
-                            "desk_access": 0 if role == "Marketplace Customer"
+                            "desk_access": 0 if role == "Car Marketplace Customer"
                             else 1}).insert(ignore_permissions=True)
+
+
+def after_install():
+    ensure_roles()
 
     for name, order in VEHICLE_CLASSES:
         if not frappe.db.exists("Vehicle Class", name):
@@ -24,7 +28,7 @@ def after_install():
 
     ensure_custom_fields()
 
-    settings = frappe.get_single("Marketplace Settings")
+    settings = frappe.get_single("Car Marketplace Settings")
     if not settings.default_currency:
         settings.default_currency = "OMR"
     settings.save(ignore_permissions=True)

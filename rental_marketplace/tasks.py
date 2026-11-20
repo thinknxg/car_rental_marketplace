@@ -34,7 +34,7 @@ def close_expired_tenders():
 def release_expired_reservations():
     """Pending-Payment bookings past the hold window are released so
     the vehicle returns to the market."""
-    hold = frappe.db.get_single_value("Marketplace Settings",
+    hold = frappe.db.get_single_value("Car Marketplace Settings",
                                       "payment_hold_minutes") or 60
     cutoff = add_to_date(now_datetime(), minutes=-hold)
     for name in frappe.get_all(
@@ -129,7 +129,7 @@ def reconcile_payments():
 
 def refresh_marketplace_metrics():
     metrics = {
-        "requests_created": frappe.db.count("Rental Request"),
+        "requests_created": frappe.db.count("Car Rental Request"),
         "tenders_created": frappe.db.count("Tender"),
         "offers_submitted": frappe.db.count(
             "Offer", {"status": ["!=", "Draft"]}),

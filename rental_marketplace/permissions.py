@@ -3,8 +3,8 @@ here in addition to standard role/DocType permissions."""
 
 import frappe
 
-OPERATOR_ROLES = {"Marketplace Admin", "Marketplace Operations",
-                  "Marketplace Finance", "Marketplace Support",
+OPERATOR_ROLES = {"Car Marketplace Admin", "Car Marketplace Operations",
+                  "Car Marketplace Finance", "Car Marketplace Support",
                   "System Manager"}
 
 
@@ -23,7 +23,7 @@ def get_user_supplier(user=None):
 def rental_request_query(user):
     if is_operator(user):
         return ""
-    return f"`tabRental Request`.customer = {frappe.db.escape(user)}"
+    return f"`tabCar Rental Request`.customer = {frappe.db.escape(user)}"
 
 
 def tender_supplier_query(user):

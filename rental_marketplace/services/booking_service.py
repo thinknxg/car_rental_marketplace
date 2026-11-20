@@ -14,7 +14,7 @@ from rental_marketplace.exceptions import (
     InvalidStateTransition, OfferExpired, TenderClosed, VehicleUnavailable,
     BookingNotFound)
 
-OPERATOR_ROLES = {"Marketplace Admin", "Marketplace Operations", "System Manager"}
+OPERATOR_ROLES = {"Car Marketplace Admin", "Car Marketplace Operations", "System Manager"}
 SUPPLIER_ROLES = {"Supplier Admin", "Supplier Manager", "Supplier Agent"}
 
 # action → allowed source states, target, who may perform it
@@ -201,7 +201,7 @@ def accept_offer(tender_name, offer_name, customer_user):
 
     frappe.db.set_value("Tender", tender_name,
                         {"status": "Awarded", "closed_at": now_datetime()})
-    frappe.db.set_value("Rental Request", tender.rental_request,
+    frappe.db.set_value("Car Rental Request", tender.rental_request,
                         "status", "Accepted")
 
     audit.log("offer_accepted", "Offer", offer.name,
@@ -375,7 +375,7 @@ def _create_booking_from_offer(offer, tender):
     b.supplier_amount = offer.supplier_payout
     b.deposit_amount = offer.deposit_amount
     # partner attribution flows request → booking
-    partner = frappe.db.get_value("Rental Request", tender.rental_request,
+    partner = frappe.db.get_value("Car Rental Request", tender.rental_request,
                                   "partner")
     if partner:
         share = frappe.db.get_value("Marketplace Partner", partner,

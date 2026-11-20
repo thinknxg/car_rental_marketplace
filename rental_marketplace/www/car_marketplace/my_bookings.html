@@ -1,0 +1,512 @@
+<style>
+.hp-footer{background:#fff;color:#5A5D63;padding:48px 20px 0}
+.hp-footer-top{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:1.1fr 1fr 1fr 1fr 1fr;gap:26px;padding-bottom:36px;align-items:start}
+.hp-footer-col h4{color:var(--mk-ink);font-family:var(--mk-disp);font-size:.92rem;margin:0 0 16px;text-transform:uppercase;letter-spacing:.04em}
+.hp-footer-col a{display:block;color:#5A5D63;text-decoration:none;font-size:.9rem;margin-bottom:14px}
+.hp-footer-col a:hover{color:var(--mk-ink)}
+.hp-footer-col p{font-size:.9rem;margin:0 0 12px;color:#5A5D63}
+.hp-footer-brand-row{height:90px;overflow:hidden;margin-bottom:14px}
+.hp-footer-brand-row img{height:200px;width:auto;border-radius:8px;display:block;margin-top:-55px}
+.hp-footer-social{display:flex;gap:10px;margin-top:16px}
+.hp-footer-social a{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:var(--mk-paper);border:1px solid var(--mk-line);margin:0;color:var(--mk-ink)}
+.hp-footer-social svg{width:16px;height:16px}
+.hp-footer-map{border-radius:12px;overflow:hidden;border:1px solid var(--mk-line);height:150px;margin-top:6px}
+.hp-footer-map iframe{width:100%;height:100%;border:0;display:block}
+.hp-footer-bottom{max-width:1200px;margin:0 auto;padding:20px 0 24px;border-top:1px solid var(--mk-line);font-size:.8rem;text-align:center;color:#9A9DA3}
+@media (max-width:900px){.hp-footer-top{grid-template-columns:1fr 1fr}}
+@media (max-width:560px){.hp-footer-top{grid-template-columns:1fr}}
+</style>
+{% extends "templates/web.html" %}
+{% block title %}My Bookings{% endblock %}
+{% block page_content %}
+<link rel="stylesheet" href="/assets/rental_marketplace/css/marketplace.css?v=202611184">
+<div class="mk-hero" style="padding:0;min-height:0;background:#0F1115">
+  <div class="hp-nav">
+    <a class="hp-logo-link" href="/car-marketplace"><img class="hp-logo" src="/files/thinkcarrent-logo-square-1024.png" alt="ThinkCarRent"></a>
+    <input type="checkbox" id="hp-nav-toggle" class="hp-nav-toggle" aria-hidden="true" tabindex="-1">
+    <label for="hp-nav-toggle" class="hp-nav-burger" aria-label="Menu"><span></span><span></span><span></span></label>
+    <div class="hp-nav-right">
+      <a href="https://wa.me/96895351035" target="_blank" rel="noopener" class="hp-nav-link">Help Center</a>
+      <a href="/car-marketplace/become-supplier" class="hp-nav-pill">List Your Fleet</a>
+      <a href="/car-marketplace/account/bookings" class="hp-nav-pill">My Booking</a>
+      {% if frappe.session.user == "Guest" %}<a href="/login" class="hp-nav-signin">Sign in</a>{% else %}<a href="/?cmd=web_logout" class="hp-nav-signin">Sign out</a>{% endif %}
+    </div>
+  </div>
+</div>
+<div class="mk-wrap" style="max-width:1200px">
+  <h1 class="mk-h1">My bookings</h1>
+  <p class="mk-sub">Pay pending bookings to confirm them, or cancel under the offer's cancellation policy.</p>
+  <div id="alert" class="mk-alert"></div>
+  {% if not bookings %}<div class="mk-card">No bookings yet. <a href="/car-marketplace/request">Request a vehicle</a>.</div>{% endif %}
+  {% for b in bookings %}
+  {% set v = b.vehicle_detail %}
+  <div class="mk-card mk-booking-grid" id="booking-card-{{ b.name }}">
+    <div class="mk-booking-left">
+      {% if b.payment_status == "Unpaid" %}
+      <div id="extras-inline-{{ b.name }}" data-currency="{{ b.currency }}" data-days="{{ b.rental_days or 1 }}"></div>
+      {% else %}
+      <div class="mk-meta">This booking is already paid — extras and insurance can no longer be changed.</div>
+      {% endif %}
+    </div>
+    <div class="mk-booking-right">
+      <div style="display:flex;gap:14px;align-items:flex-start;margin-bottom:14px">
+        {% if v and v.primary_photo %}
+        <img src="{{ v.primary_photo }}" alt="{{ v.display_name }}" style="width:120px;height:88px;object-fit:cover;border-radius:8px;flex-shrink:0">
+        {% endif %}
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:1.02rem">{{ v.display_name if v else b.vehicle or b.name }}</div>
+          {% if v %}
+          <div class="mk-meta">{{ v.make }} {{ v.model }} {{ v.model_year }} · {{ v.transmission }} · {{ v.fuel_type }} · {{ v.seats }} seats</div>
+          {% endif %}
+          <div class="mk-meta">{{ b.pickup_location }} · {{ frappe.utils.format_datetime(b.pickup_datetime, "d MMM yyyy HH:mm") }} → {{ frappe.utils.format_datetime(b.dropoff_datetime, "d MMM yyyy HH:mm") }}</div>
+          <div style="margin-top:6px">
+            <span class="mk-badge {{ 'ok' if b.booking_status in ('Confirmed','Completed','Active Rental') else ('warn' if b.booking_status=='Pending Payment' else '') }}">{{ b.booking_status }}</span>
+            <span class="mk-badge">{{ b.payment_status }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="mk-breakdown">
+        <div class="mk-row" style="font-weight:700"><span>Total</span> <span id="total-amt-{{ b.name }}">{{ b.currency }} {{ "%.2f"|format(b.gross_amount or 0) }}</span></div>
+        {% if b.payment_status == "Unpaid" %}
+        <div class="mk-row" style="background:#e9f7ec;padding:6px 8px;border-radius:6px;margin:4px 0"><span>Due now</span> <span id="duenow-amt-{{ b.name }}">{{ b.currency }} {{ "%.2f"|format(b.amount_due or 0) }}</span></div>
+        {% endif %}
+        <div class="mk-row mk-meta"><span>Due to owner</span> <span id="dueowner-amt-{{ b.name }}">{{ b.currency }} {{ "%.2f"|format(b.supplier_amount or 0) }}</span></div>
+        <div class="mk-row mk-meta"><span>Security deposit</span> <span>{{ b.currency }} {{ "%.2f"|format(b.deposit_amount or 0) }}</span></div>
+      </div>
+      <div style="margin-top:16px">
+      {% if b.booking_status == "Pending Payment" %}
+      <button class="mk-btn" id="pay-btn-{{ b.name }}" style="width:100%" onclick="showPayModal('{{ b.name }}')">Pay {{ b.currency }} {{ "%.2f"|format(b.amount_due or 0) }}</button>
+      <div class="mk-meta" id="pay-usd-inline-{{ b.name }}" data-currency="{{ b.currency }}" style="margin-top:6px;font-size:.82rem;color:#6b7280"></div>
+      <div class="mk-meta" style="margin-top:6px;font-size:.8rem">By pressing the button you accept the terms of the <a href="/files/rentacar_service_agreement.pdf" target="_blank">RentaCAR Service Agreement</a>.</div>
+      {% endif %}
+      {% if b.booking_status in ("Pending Payment","Confirmed","Supplier Confirmed","Ready for Pickup") %}
+      <button class="mk-btn ghost" style="margin-top:8px;width:100%" onclick="cancelBooking('{{ b.name }}')">Cancel</button>
+      {% endif %}
+      {% if b.payment_status != "Unpaid" %}
+      <button class="mk-btn ghost" style="margin-top:8px;width:100%" onclick="showInvoice('{{ b.name }}')">View Invoice</button>
+      {% endif %}
+      </div>
+    </div>
+  </div>
+  <div style="margin-bottom:24px"></div>
+  {% endfor %}
+</div>
+
+<div id="invoice-modal" style="display:none;position:fixed;inset:0;background:rgba(15,17,21,.6);z-index:1000;align-items:center;justify-content:center;padding:16px">
+  <div class="mk-card" style="max-width:720px;width:95%;height:85vh;margin-top:0;padding:0;display:flex;flex-direction:column;overflow:hidden">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid #eee">
+      <div style="font-weight:700">Invoice</div>
+      <div style="display:flex;gap:8px">
+        <a id="invoice-download-link" class="mk-btn" style="padding:8px 16px" href="#" target="_blank">Download</a>
+        <button class="mk-btn ghost" style="padding:8px 16px" onclick="hideInvoiceModal()">Close</button>
+      </div>
+    </div>
+    <iframe id="invoice-frame" style="flex:1;border:none;width:100%"></iframe>
+  </div>
+</div>
+<style>
+.mk-pay-modal-card{max-width:440px;width:92%;margin-top:0;padding:28px 26px}
+.mk-pay-title{font-weight:700;font-size:1.2rem;font-family:var(--mk-disp);color:var(--mk-ink);margin-bottom:4px}
+.mk-pay-sub{font-size:.85rem;color:#6b7280;margin-bottom:20px}
+.mk-pay-option-card{
+  display:flex;align-items:flex-start;gap:12px;padding:16px;border:2px solid #e5e7eb;
+  border-radius:12px;cursor:pointer;margin-bottom:20px;transition:border-color .15s,background .15s;
+}
+.mk-pay-option-card:hover{border-color:#c7cdd6}
+.mk-pay-option-card.checked{border-color:var(--mk-accent-dark,#1E8A5C);background:rgba(30,138,92,.06)}
+.mk-pay-checkbox{
+  width:22px;height:22px;min-width:22px;border-radius:6px;border:2px solid #b8bec8;
+  display:flex;align-items:center;justify-content:center;margin-top:1px;transition:all .15s;flex-shrink:0;
+}
+.mk-pay-option-card.checked .mk-pay-checkbox{background:var(--mk-accent-dark,#1E8A5C);border-color:var(--mk-accent-dark,#1E8A5C)}
+.mk-pay-checkbox svg{width:14px;height:14px;opacity:0;transition:opacity .15s}
+.mk-pay-option-card.checked .mk-pay-checkbox svg{opacity:1}
+.mk-pay-option-title{font-weight:600;font-size:.95rem;color:var(--mk-ink);margin-bottom:3px}
+.mk-pay-option-desc{font-size:.8rem;color:#6b7280;line-height:1.5}
+.mk-pay-methods-label{font-size:.78rem;font-weight:600;letter-spacing:.03em;color:#8b93a1;text-transform:uppercase;margin-bottom:10px}
+.mk-pay-method-btn{
+  width:100%;display:flex;align-items:center;justify-content:space-between;
+  padding:14px 16px;border:1.5px solid #e5e7eb;border-radius:10px;background:#fff;
+  font-weight:600;font-size:.92rem;color:var(--mk-ink);cursor:pointer;margin-bottom:10px;
+  transition:border-color .15s,box-shadow .15s;font-family:var(--mk-disp);
+}
+.mk-pay-method-btn:hover{border-color:var(--mk-accent-dark,#1E8A5C);box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.mk-pay-method-btn .chev{color:#9aa1ad;font-size:1.1rem}
+.mk-pay-cancel{width:100%;text-align:center;padding:10px;font-size:.85rem;color:#6b7280;background:none;border:none;cursor:pointer;margin-top:4px}
+.mk-pay-cancel:hover{color:var(--mk-ink)}
+</style>
+<div id="pay-modal" style="display:none;position:fixed;inset:0;background:rgba(15,17,21,.6);z-index:999;align-items:center;justify-content:center;padding:16px">
+  <div class="mk-card mk-pay-modal-card">
+    <div class="mk-pay-title">Complete your payment</div>
+    <div class="mk-pay-sub">Choose how much to pay now and select a payment method.</div>
+
+    <div class="mk-pay-option-card" id="full-payment-card" onclick="toggleFullPayment()">
+      <div class="mk-pay-checkbox" id="full-payment-box">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div>
+        <div class="mk-pay-option-title">Pay the full rental amount now</div>
+        <div class="mk-pay-option-desc" id="part-payment-desc">Settles the entire trip cost today. Leave unchecked to pay only the Part Payment now — the remaining balance is paid directly to the vehicle owner at pickup.</div>
+      </div>
+    </div>
+    <input type="checkbox" id="full-payment-check" style="display:none">
+
+    <div id="pay-step-method">
+      <button class="mk-pay-method-btn" id="pay-confirm-btn" style="justify-content:center;gap:10px;background:#0070ba;color:#fff;border:0;font-weight:700" onclick="payWithPaypal()">
+        <img src="https://www.paypalobjects.com/webstatic/mktg/logo/pp_cc_mark_37x23.jpg" alt="" style="height:22px;width:auto;border-radius:4px;flex-shrink:0">
+        <span>Pay with PayPal</span>
+      </button>
+      <button class="mk-pay-cancel" onclick="hidePayModal()">Cancel</button>
+    </div>
+
+    <div id="pay-step-continue" style="display:none"></div>
+    <div id="pay-step-pin" style="display:none"></div>
+
+    <div id="pay-step-success" style="display:none;text-align:center;padding:12px 0">
+      <div style="width:56px;height:56px;border-radius:50%;background:#E4F5EC;display:flex;align-items:center;justify-content:center;margin:0 auto 14px">
+        <svg viewBox="0 0 24 24" fill="none" width="30" height="30"><path d="M5 13l4 4L19 7" stroke="#1E8A5C" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div style="font-weight:700;font-size:1.1rem;margin-bottom:4px">Payment successful</div>
+      <div class="mk-pay-sub" style="margin:0 0 16px">Your booking is confirmed.</div>
+    </div>
+  </div>
+</div>
+<style>
+.mk-pay-confirm-box{border:1.5px solid #e5e7eb;border-radius:10px;padding:14px 16px;margin-bottom:16px}
+.mk-pay-confirm-row{display:flex;justify-content:space-between;font-size:.92rem;padding:6px 0}
+.mk-pay-confirm-row span{color:#888}
+</style>
+<style>
+.mk-booking-grid{display:grid;grid-template-columns:1fr 340px;gap:28px;align-items:start}
+.mk-booking-left{min-width:0;text-align:left}
+.mk-booking-right{min-width:0;text-align:left}
+@media(max-width:760px){.mk-booking-grid{grid-template-columns:1fr}}
+.mk-extras-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.mk-extras-grid{align-items:stretch}
+.mk-extra-card{
+  display:flex;align-items:flex-start;gap:10px;padding:14px;border:1.5px solid #e5e7eb;
+  border-radius:10px;cursor:pointer;background:#fff;transition:border-color .15s,background .15s;
+  height:100%;box-sizing:border-box;
+}
+.mk-extra-card:hover{border-color:#c7cdd6}
+.mk-extra-card.checked{border-color:var(--mk-ok,#1E8A5C);background:rgba(30,138,92,.05)}
+.mk-extra-card input[type=checkbox],.mk-extra-card input[type=radio]{
+  width:20px;height:20px;margin-top:2px;flex-shrink:0;accent-color:var(--mk-ok,#1E8A5C);cursor:pointer;
+}
+.mk-extra-card > span{display:flex;flex-direction:column;justify-content:space-between;flex:1;min-height:78px}
+</style>
+<script>
+// Same fixed pegs used server-side (rental_marketplace.services.paypal_gateway) — display only.
+const MK_FX_TO_USD = {OMR: 2.6008, AED: 1/3.6725, USD: 1};
+function updatePaypalUsdNote(){
+  const modal = document.getElementById('pay-modal');
+  const b = modal.dataset.booking;
+  if(!b) return;
+  const fullPayment = document.getElementById('full-payment-check').checked;
+  const amountEl = document.getElementById(fullPayment ? 'total-amt-'+b : 'duenow-amt-'+b);
+  const noteEl = document.getElementById('pay-usd-amount');
+  if(!amountEl || !noteEl) return;
+  const parts = amountEl.textContent.trim().split(/\s+/);
+  const currency = parts[0];
+  const amount = parseFloat(parts[1]);
+  const rate = MK_FX_TO_USD[currency];
+  if(!rate || isNaN(amount)){ noteEl.textContent = '—'; return; }
+  noteEl.textContent = 'USD ' + (amount * rate).toFixed(2);
+}
+document.addEventListener('DOMContentLoaded', function(){
+  document.querySelectorAll('[id^="pay-usd-inline-"]').forEach(function(el){
+    const bookingId = el.id.replace('pay-usd-inline-', '');
+    const btn = document.getElementById('pay-btn-'+bookingId);
+    if(!btn) return;
+    const m = btn.textContent.trim().match(/Pay\s+(\S+)\s+([\d.]+)/);
+    if(!m) return;
+    updatePayUsdInline(bookingId, m[1], parseFloat(m[2]));
+  });
+});
+function toggleFullPayment(){
+  const cb = document.getElementById('full-payment-check');
+  cb.checked = !cb.checked;
+  document.getElementById('full-payment-card').classList.toggle('checked', cb.checked);
+  updatePaypalUsdNote();
+}
+
+let extrasStateByBooking = {};
+
+function updatePayUsdInline(bookingId, currency, amountDue){
+  const el = document.getElementById('pay-usd-inline-'+bookingId);
+  const btn = document.getElementById('pay-btn-'+bookingId);
+  const rate = MK_FX_TO_USD[currency];
+  if(!rate){ return; }
+  const usd = amountDue * rate;
+  if(btn) btn.textContent = 'Pay USD ' + usd.toFixed(2);
+  if(el) el.textContent = '(' + currency + ' ' + amountDue.toFixed(2) + ' \u2014 charged via PayPal in USD, PayPal does not support ' + currency + ')';
+}
+function updateBreakdownDisplay(bookingId, data){
+  const el = document.getElementById('extras-inline-'+bookingId);
+  const currency = el ? (el.dataset.currency||'OMR') : 'OMR';
+  const totalEl = document.getElementById('total-amt-'+bookingId);
+  const dueNowEl = document.getElementById('duenow-amt-'+bookingId);
+  const dueOwnerEl = document.getElementById('dueowner-amt-'+bookingId);
+  const payBtn = document.getElementById('pay-btn-'+bookingId);
+  if(totalEl && data.gross_amount !== undefined) totalEl.textContent = currency+' '+Number(data.gross_amount).toFixed(2);
+  if(dueNowEl && data.amount_due !== undefined) dueNowEl.textContent = currency+' '+Number(data.amount_due).toFixed(2);
+  if(dueOwnerEl && data.supplier_amount !== undefined) dueOwnerEl.textContent = currency+' '+Number(data.supplier_amount).toFixed(2);
+  if(data.amount_due !== undefined) updatePayUsdInline(bookingId, currency, Number(data.amount_due));
+}
+
+function loadExtrasInline(bookingId){
+  const container = document.getElementById('extras-inline-'+bookingId);
+  if(!container) return;
+  frappe.call({method:'rental_marketplace.api.list_booking_extras',
+    args:{booking_id: bookingId},
+    callback(r){
+      const m = r.message || {};
+      if(!m.success){container.innerHTML = '<div class="mk-meta">Could not load extras.</div>';return;}
+      extrasStateByBooking[bookingId] = m.data;
+      renderExtrasInline(bookingId);
+    }});
+}
+
+function renderExtrasInline(bookingId){
+  const container = document.getElementById('extras-inline-'+bookingId);
+  const rentalDays = parseInt((container && container.dataset.days) || '1', 10) || 1;
+  const state = extrasStateByBooking[bookingId] || {available:[], added:[]};
+  const added = state.added || [];
+  const available = state.available || [];
+  const addedNames = added.map(a => a.extra);
+
+  const insuranceItems = available.filter(e => e.category === 'Insurance');
+  const otherItems = available.filter(e => e.category !== 'Insurance');
+  const insuranceNames = insuranceItems.map(e => e.name);
+  const currentInsurance = insuranceNames.find(n => addedNames.includes(n)) || '';
+
+  let html = '';
+
+  if(insuranceItems.length){
+    html += '<div style="font-weight:700;font-size:1rem;margin-bottom:12px">Insurance</div>';
+    html += '<div class="mk-extras-grid" style="margin-bottom:24px">';
+    html += `
+      <label class="mk-extra-card ${currentInsurance===''?'checked':''}">
+        <input type="radio" name="insurance-${bookingId}" ${currentInsurance===''?'checked':''} onchange="selectInsurance('${bookingId}','')">
+        <span>
+          <div style="font-weight:700;font-size:.92rem">Basic</div>
+          <div class="mk-meta">Included</div>
+        </span>
+      </label>`;
+    insuranceItems.forEach(e => {
+      const isChecked = currentInsurance === e.name;
+      html += `
+      <label class="mk-extra-card ${isChecked?'checked':''}">
+        <input type="radio" name="insurance-${bookingId}" ${isChecked?'checked':''} onchange="selectInsurance('${bookingId}','${e.name}')">
+        <span>
+          <div style="font-weight:700;font-size:.92rem">${e.extra_name}</div>
+          <div class="mk-meta">${e.description||''}</div>
+          <div style="color:var(--mk-ok);font-weight:700;font-size:.88rem;margin-top:4px">${e.pricing_method==='Per Day' ? `${e.currency||''} ${(e.price||0).toFixed(2)}/day × ${rentalDays} day${rentalDays===1?'':'s'} = ${e.currency||''} ${((e.price||0)*rentalDays).toFixed(2)}` : `${e.currency||''} ${(e.price||0).toFixed(2)} ${e.pricing_method==='Per Rental'?'total':''}`}</div>
+        </span>
+      </label>`;
+    });
+    html += '</div>';
+  }
+
+  html += '<div style="font-weight:700;font-size:1rem;margin-bottom:12px">Add extras</div>';
+  html += '<div class="mk-extras-grid">';
+  otherItems.forEach(e => {
+    const isChecked = addedNames.includes(e.name);
+    html += `
+      <label class="mk-extra-card ${isChecked?'checked':''}">
+        <input type="checkbox" ${isChecked?'checked':''} onchange="toggleExtra('${bookingId}','${e.name}', this.checked)">
+        <span>
+          <div style="font-weight:700;font-size:.92rem">${e.extra_name}</div>
+          <div class="mk-meta">${e.description||''}</div>
+          <div style="color:var(--mk-ok);font-weight:700;font-size:.88rem;margin-top:4px">${e.pricing_method==='Per Day' ? `${e.currency||''} ${(e.price||0).toFixed(2)}/day × ${rentalDays} day${rentalDays===1?'':'s'} = ${e.currency||''} ${((e.price||0)*rentalDays).toFixed(2)}` : `${e.currency||''} ${(e.price||0).toFixed(2)} ${e.pricing_method==='Per Rental'?'total':''}`}</div>
+        </span>
+      </label>`;
+  });
+  html += '</div>';
+  if(!otherItems.length) html += '<div class="mk-meta">No extras available for this booking.</div>';
+  container.innerHTML = html;
+}
+
+function callAddExtra(bookingId, extraName, then){
+  frappe.call({method:'rental_marketplace.api.add_booking_extras',
+    args:{booking_id: bookingId, extras: JSON.stringify([{extra: extraName, quantity: 1}]),
+          idempotency_key: 'extras-'+bookingId+'-'+extraName+'-'+Date.now()},
+    callback(r){
+      const m = r.message || {};
+      if(m.success){
+        showAlert('ok','Extra added — totals updated.');
+        updateBreakdownDisplay(bookingId, m.data);
+      } else {
+        showAlert('err',(m.error&&m.error.message)||'Could not update extras.');
+      }
+      loadExtrasInline(bookingId);
+      if(then) then();
+    }});
+}
+
+function callRemoveExtra(bookingId, extraName, then){
+  frappe.call({method:'rental_marketplace.api.remove_booking_extra',
+    args:{booking_id: bookingId, extra: extraName,
+          idempotency_key: 'extras-rm-'+bookingId+'-'+extraName+'-'+Date.now()},
+    callback(r){
+      const m = r.message || {};
+      if(m.success){
+        showAlert('ok','Extra removed — totals updated.');
+        updateBreakdownDisplay(bookingId, m.data);
+      } else {
+        showAlert('err',(m.error&&m.error.message)||'Could not update extras.');
+      }
+      loadExtrasInline(bookingId);
+      if(then) then();
+    }});
+}
+
+function toggleExtra(bookingId, extraName, isChecked){
+  if(isChecked) callAddExtra(bookingId, extraName);
+  else callRemoveExtra(bookingId, extraName);
+}
+
+function selectInsurance(bookingId, extraName){
+  const state = extrasStateByBooking[bookingId] || {added:[], available:[]};
+  const addedNames = (state.added||[]).map(a=>a.extra);
+  const insuranceNames = (state.available||[]).filter(e=>e.category==='Insurance').map(e=>e.name);
+  const current = insuranceNames.find(n => addedNames.includes(n)) || '';
+  if(current === extraName) return;
+  const doAdd = () => { if(extraName) callAddExtra(bookingId, extraName); };
+  if(current) callRemoveExtra(bookingId, current, doAdd);
+  else doAdd();
+}
+
+document.addEventListener('DOMContentLoaded', function(){
+  document.querySelectorAll('[id^="extras-inline-"]').forEach(function(el){
+    const bookingId = el.id.replace('extras-inline-','');
+    loadExtrasInline(bookingId);
+  });
+});
+
+function showInvoice(bookingId){
+  const url = '/api/method/rental_marketplace.api.download_invoice'
+    + '?booking_id=' + encodeURIComponent(bookingId) + '&download=0';
+  window.open(url, '_blank');
+}
+</script>
+<script>
+function showPayModal(b){
+  const modal=document.getElementById('pay-modal');
+  modal.style.display='flex';
+  modal.dataset.booking=b;
+  document.getElementById('pay-pin-input').value='';
+  document.getElementById('pay-pin-input').style.borderColor='';
+  const dueNowEl = document.getElementById('duenow-amt-'+b);
+  const descEl = document.getElementById('part-payment-desc');
+  if(dueNowEl && descEl){
+    descEl.textContent = 'Settles the entire trip cost today. Leave unchecked to pay only the Part Payment '+dueNowEl.textContent+' now \u2014 the remaining balance is paid directly to the vehicle owner at pickup.';
+  }
+  setPayStep('method');
+  }
+function hidePayModal(){
+  document.getElementById('pay-modal').style.display='none';
+}
+function setPayStep(step){
+  ['method','continue','pin','success'].forEach(function(s){
+    document.getElementById('pay-step-'+s).style.display = (s===step) ? 'block' : 'none';
+  });
+}
+function showAlert(cls,msg){const a=document.getElementById('alert');a.className='mk-alert '+cls;a.textContent=msg;}
+function payWithPaypal(){
+  const modal=document.getElementById('pay-modal');
+  const b = modal.dataset.booking;
+  const fullPayment = document.getElementById('full-payment-check').checked ? 1 : 0;
+  const btn = document.getElementById('pay-confirm-btn');
+  btn.disabled = true;
+  btn.textContent = 'Redirecting to PayPal…';
+  frappe.call({method:'rental_marketplace.api.start_paypal_payment',
+    args:{booking_id:b, idempotency_key:'pay-'+b, full_payment: fullPayment},
+    callback(r){
+      const m=r.message||{};
+      if(m.success && m.data && m.data.approval_url){
+        window.location.href = m.data.approval_url;
+        return;
+      }
+      btn.disabled = false;
+      btn.textContent = 'Pay with PayPal';
+      hidePayModal();
+      showAlert('err',(m.error&&m.error.message)||'Could not start payment.');
+    },
+    error(){
+      btn.disabled = false;
+      btn.textContent = 'Pay with PayPal';
+      hidePayModal();
+      showAlert('err','Could not start payment.');
+    }});
+}
+function refreshBookingCard(b){
+  frappe.call({method:'rental_marketplace.api.get_booking_summary',
+    args:{booking_id:b},
+    callback(r){
+      const m=r.message||{};
+      if(!m.success) return;
+      const card = document.querySelector('[data-booking-card="'+b+'"]');
+      if(card) location.reload();
+    }});
+}
+function cancelBooking(b){
+  if(!confirm('Cancel this booking? Refunds follow the cancellation policy.'))return;
+  frappe.call({method:'rental_marketplace.api.cancel_booking',
+    args:{booking_id:b, idempotency_key:'cancel-'+b},
+    callback(r){
+      const m=r.message||{};
+      if(m.success){location.reload();}
+      else showAlert('err',(m.error&&m.error.message)||'Cancellation failed.');
+    }});
+}
+</script>
+<div class="hp-footer">
+  <div class="hp-footer-top">
+    <div class="hp-footer-col">
+      <div class="hp-footer-brand-row">
+        <img src="/files/thinkcarrent-logo-square-1024.png" alt="ThinkCarRent">
+      </div>
+      <p>Transparent, verified car rentals across Oman &amp; UAE — powered by Kreatao's thinkNXG platform.</p>
+      <div class="hp-footer-social">
+        <a href="https://wa.me/96895351035" target="_blank" rel="noopener" aria-label="WhatsApp">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.71.45 3.37 1.3 4.83L2 22l5.42-1.42a9.9 9.9 0 0 0 4.62 1.18h.004c5.46 0 9.9-4.45 9.9-9.91C21.96 6.45 17.5 2 12.04 2z" fill="#25D366"/><path d="M17.47 14.38c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.07-.3-.15-1.26-.46-2.4-1.48-.89-.79-1.48-1.77-1.66-2.07-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.67-1.6-.91-2.2-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48s1.07 2.88 1.22 3.08c.15.2 2.1 3.2 5.1 4.49.71.31 1.27.49 1.7.62.71.23 1.36.2 1.87.12.57-.09 1.76-.72 2.01-1.42.25-.7.25-1.29.17-1.42-.07-.12-.27-.2-.57-.35z" fill="#fff"/></svg>
+        </a>
+        <a href="mailto:sales@kreatao.com" aria-label="Email">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 6l10 7 10-7"/></svg>
+        </a>
+      </div>
+    </div>
+    <div class="hp-footer-col">
+      <h4>Quick Links</h4>
+      <a href="https://kreatao.com/" target="_blank" rel="noopener">About Kreatao</a>
+      <a href="/car-marketplace/fleet">Browse fleet</a>
+      <a href="/car-marketplace/request">Request a vehicle</a>
+      <a href="/car-marketplace/become-supplier">List your fleet</a>
+    </div>
+    <div class="hp-footer-col">
+      <h4>Types of Car</h4>
+      {% for c in vehicle_classes %}
+      <a href="/car-marketplace/fleet?class={{ c.name }}">{{ c.class_name }}</a>
+      {% endfor %}
+    </div>
+    <div class="hp-footer-col">
+      <h4>Locations</h4>
+      {% for l in locations %}
+      <a href="/car-marketplace/fleet?pickup_location={{ l.name }}">{{ l.location_name }}</a>
+      {% endfor %}
+    </div>
+    <div class="hp-footer-col">
+      <h4>Find Us</h4>
+      <p>Al Seeb, Postal Code 111, Muscat, Oman</p>
+      <a href="tel:+96895351035">+968 9535 1035</a>
+      <a href="mailto:sales@kreatao.com">sales@kreatao.com</a>
+      <div class="hp-footer-map">
+        <iframe loading="lazy" src="https://maps.google.com/maps?q=Al%20Seeb%2C%20Muscat%2C%20Oman&z=13&output=embed"></iframe>
+      </div>
+    </div>
+  </div>
+  <div class="hp-footer-bottom">© 2026 Kreatao Technologies. All rights reserved.</div>
+</div>
+
+{% endblock %}
